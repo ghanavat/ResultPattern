@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <PackageVersion Include="FluentValidation" Version="11.11.0" />
+    <PackageVersion Include="NuGet.Versioning" Version="6.12.1" />
+  </ItemGroup>
+</Project>

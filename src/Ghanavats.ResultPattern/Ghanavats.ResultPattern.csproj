@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Authors>Saeed Ghanavat</Authors>
+        <Description>A simple result pattern package to achieve API/Services/Handlers consistent response.
+            Common result statuses, Error/NotFound/Invalid, and Success are handled and encapsulated in this package.
+        </Description>
+
+        <PackageId>Ghanavats.ResultPattern</PackageId>
+        <Title>Ghanavats.ResultPattern</Title>
+        <PackageTags>result-pattern</PackageTags>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://abcdef.com</RepositoryUrl>
+        <Version>1.0.0</Version>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentValidation"/>
+        
+        <None Include="docs\README.md" Pack="True" PackagePath=""/>
+        <None Include="LICENSE" Pack="True" PackagePath=""/>
+        <None Remove="licenses\LICENSE"/>
+    </ItemGroup>
+</Project>

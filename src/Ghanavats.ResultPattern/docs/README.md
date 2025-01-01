@@ -1,0 +1,1 @@
+# Ghanavats Result Patter project

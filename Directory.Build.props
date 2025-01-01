@@ -1,0 +1,20 @@
+<Project>
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>12</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>True</IsPackable>
+
+        <Company>Ghanavas - ghanavats.co.uk</Company>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+        <NoWarn>CS1591</NoWarn>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    </PropertyGroup>
+</Project>
