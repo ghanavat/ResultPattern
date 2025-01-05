@@ -6,8 +6,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>True</IsPackable>
-
-        <Company>Ghanavas - ghanavats.co.uk</Company>
+        
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

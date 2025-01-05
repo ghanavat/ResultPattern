@@ -6,12 +6,14 @@
             Common result statuses, Error/NotFound/Invalid, and Success are handled and encapsulated in this package.
         </Description>
 
+        <Company>Ghanavas - https://ghanavats.co.uk</Company>
         <PackageId>Ghanavats.ResultPattern</PackageId>
         <Title>Ghanavats.ResultPattern</Title>
         <PackageTags>result-pattern</PackageTags>
         <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://abcdef.com</RepositoryUrl>
+        <RepositoryUrl>https://github.com/ghanavat/ResultPattern</RepositoryUrl>
         <Version>1.0.0</Version>
+        
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
