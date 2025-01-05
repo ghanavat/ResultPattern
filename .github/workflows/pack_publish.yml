@@ -1,0 +1,24 @@
+# This workflow will publish Nuget package to NuGet Org when a release created and published
+
+name: Publish to NuGet Org
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build Ghanavats.ResultPattern.sln --configuration Release
+      - name: Pack
+        run: dotnet pack Ghanavats.ResultPattern.sln --configuration Release --no-build --no-restore --output .
+      - name: Push to NuGet Org
+        run: dotnet nuget push "*.nupkg" --api-key ${{secrets.NUGET_APIKEY}} --source https://api.nuget.org/v3/index.json
