@@ -1,4 +1,4 @@
-# Ghanavats Result Patter package
+# Ghanavats Result Pattern package
 Consistent and Flexible Result Handling for Developers to have better control over responses.
 
 ## Overview
