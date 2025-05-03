@@ -5,15 +5,32 @@ namespace Ghanavats.ResultPattern;
 
 /// <summary>
 /// Result class.
+/// Use this when you want to return a result from an implementation
 /// </summary>
-/// <remarks>
-/// Use this when you want to return a result from an implementation.
-/// </remarks>
 /// <typeparam name="T"></typeparam>
 public class Result<T>
 {
     /// <summary>
-    /// A constructor that accepts <paramref name="data"/>
+    /// A constructor that accepts <paramref name="status"/>.
+    /// It is used internally in this class and Result.Void
+    /// </summary>
+    /// <param name="status">Constructor parameter of type <paramref name="status"/></param>
+    internal Result(ResultStatus status)
+    {
+        Status = status;
+    }
+    
+    /// <summary>
+    /// Default protected constructor.
+    /// </summary>
+    /// <remarks>
+    /// It is used in Result.Void to return an instance of Success status without needing to pass any extra types.
+    /// </remarks>
+    protected internal Result() { }
+    
+    /// <summary>
+    /// A constructor that accepts <paramref name="data"/>.
+    /// It is used internally by this class.
     /// </summary>
     /// <param name="data">Constructor parameter of type <paramref name="data"/></param>
     private Result(T data)
@@ -22,7 +39,8 @@ public class Result<T>
     }
 
     /// <summary>
-    /// A constructor that accepts <paramref name="data"/>
+    /// A constructor that accepts <paramref name="data"/>.
+    /// It is used by the 'Success' method when a Success Message needed to be set.
     /// </summary>
     /// <param name="data">Constructor parameter of type <paramref name="data"/></param>
     /// <param name="successMessage">Constructor parameter of type <paramref name="successMessage"/></param>
@@ -32,24 +50,10 @@ public class Result<T>
     }
     
     /// <summary>
-    /// Default protected constructor.
+    /// Use this property to easily determine if the status is OK or not
     /// </summary>
-    /// <remarks>
-    /// It is used in Result.Void to return an instance of Success status without needing to pass any extra types.
-    /// </remarks>
-    protected Result() { }
-
-    /// <summary>
-    /// A constructor that accepts <paramref name="status"/>
-    /// </summary>
-    /// <param name="status">Constructor parameter of type <paramref name="status"/></param>
-    protected Result(ResultStatus status)
-    {
-        Status = status;
-    }
-    
-    //[JsonIgnore]
-    //public bool IsSuccess => Status is ResultStatus.OK;
+    [JsonIgnore]
+    public bool IsSuccess => Status is ResultStatus.Ok;
 
     /// <summary>
     /// Data property of type <typeparamref name="T"/> which holds the details of the result as a JSON field.
@@ -58,13 +62,13 @@ public class Result<T>
     public T? Data { get; set; }
 
     /// <summary>
-    /// Set is protected and accessible by derived classes
+    /// Use this property to accurately determine the exact status of the Result
     /// </summary>
     [JsonInclude]
     public ResultStatus Status { get; protected set; } = ResultStatus.Ok;
 
     /// <summary>
-    /// Set is protected and accessible by derived classes
+    /// Error Message collection
     /// </summary>
     [JsonInclude]
     public IEnumerable<string> ErrorMessages { get; protected set; } = [];
@@ -76,7 +80,7 @@ public class Result<T>
     public IEnumerable<ValidationError> ValidationErrors { get; protected set; } = [];
 
     /// <summary>
-    /// Set is protected and accessible by derived classes
+    /// Use this property to access the success message
     /// </summary>
     [JsonInclude]
     public string SuccessMessage { get; protected set; } = string.Empty;
@@ -88,7 +92,6 @@ public class Result<T>
     /// <returns>A Result object of <typeparamref name="T"/> </returns>
     public static Result<T> Success(T data)
     {
-        /* Default status is OK here */
         return new Result<T>(data);
     }
 
@@ -100,7 +103,6 @@ public class Result<T>
     /// <returns>A Result object of <typeparamref name="T"/> </returns>
     public static Result<T> Success(T data, string successMessage)
     {
-        /* Default status is OK */
         return new Result<T>(data, successMessage);
     }
 
@@ -124,7 +126,8 @@ public class Result<T>
     }
 
     /// <summary>
-    /// Represents invalid result with validation errors
+    /// Represents an invalid result with validation errors.
+    /// Use this when validation in your application failed.
     /// </summary>
     /// <param name="validationErrors">A list of validation errors</param>
     /// <returns>A Result object of <typeparamref name="T"/></returns>

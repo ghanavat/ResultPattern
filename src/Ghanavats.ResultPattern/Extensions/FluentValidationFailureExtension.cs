@@ -4,22 +4,12 @@ using Ghanavats.ResultPattern.Enums;
 namespace Ghanavats.ResultPattern.Extensions;
 
 /// <summary>
-/// Fluent Validation Result extension
+/// Fluent Validation Result extension to populate Validation Error collection
 /// </summary>
 public static class FluentValidationFailureExtension
 {
     public static IEnumerable<ValidationError> PopulateValidationErrors(this ValidationResult? input)
     {
-        if (input is null)
-        {
-            return [];
-        }
-        
-        return input.Errors.Select(x => new ValidationError
-        {
-            ErrorCode = x.ErrorCode,
-            ErrorMessage = x.ErrorMessage,
-            ValidationErrorType = (ValidationErrorType)x.Severity
-        });
+        return input is null ? [] : input.Errors.Select(x => new ValidationError(x.ErrorMessage, x.ErrorCode, (ValidationErrorType)x.Severity));
     }
 }

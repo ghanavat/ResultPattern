@@ -9,7 +9,8 @@ namespace Ghanavats.ResultPattern;
 public class Result : Result<Result>
 {
     /// <summary>
-    /// Default constructor derived from its base
+    /// Private constructor that is used in this class.
+    /// No need to set Status here as its default id OK.
     /// </summary>
     private Result() { }
 
@@ -20,7 +21,7 @@ public class Result : Result<Result>
     private Result(ResultStatus status) : base(status) { }
 
     /// <summary>
-    /// Represents a successful operation without return type
+    /// Represents a successful operation without a return type
     /// </summary>
     /// <returns>A Success Result</returns>
     public static Result Success() => new();
