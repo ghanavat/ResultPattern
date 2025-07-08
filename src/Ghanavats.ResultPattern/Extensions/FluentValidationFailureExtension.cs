@@ -10,6 +10,9 @@ public static class FluentValidationFailureExtension
 {
     public static IEnumerable<ValidationError> PopulateValidationErrors(this ValidationResult? input)
     {
-        return input is null ? [] : input.Errors.Select(x => new ValidationError(x.ErrorMessage, x.ErrorCode, (ValidationErrorType)x.Severity));
+        return input is null
+            ? []
+            : input.Errors
+                .Select(x => new ValidationError(x.ErrorMessage, x.ErrorCode, (ValidationErrorType)x.Severity));
     }
 }

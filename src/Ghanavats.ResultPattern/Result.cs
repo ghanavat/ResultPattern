@@ -1,5 +1,8 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 using Ghanavats.ResultPattern.Enums;
+
+[assembly: InternalsVisibleTo(assemblyName: "Ghanavats.ResultPattern.Tests")]
 
 namespace Ghanavats.ResultPattern;
 
@@ -11,6 +14,15 @@ namespace Ghanavats.ResultPattern;
 public class Result<T>
 {
     /// <summary>
+    /// A constructor that accepts <paramref name="data"/>.
+    /// </summary>
+    /// <param name="data">Constructor parameter of type <paramref name="data"/></param>
+    public Result(T data)
+    {
+        Data = data;
+    }
+
+    /// <summary>
     /// A constructor that accepts <paramref name="status"/>.
     /// It is used internally in this class and Result.Void
     /// </summary>
@@ -19,24 +31,15 @@ public class Result<T>
     {
         Status = status;
     }
-    
+
     /// <summary>
     /// Default protected constructor.
     /// </summary>
     /// <remarks>
-    /// It is used in Result.Void to return an instance of Success status without needing to pass any extra types.
+    /// It is used in Result.Void to return an instance of
+    /// Success status without needing to pass any extra types.
     /// </remarks>
     protected internal Result() { }
-    
-    /// <summary>
-    /// A constructor that accepts <paramref name="data"/>.
-    /// It is used internally by this class.
-    /// </summary>
-    /// <param name="data">Constructor parameter of type <paramref name="data"/></param>
-    private Result(T data)
-    {
-        Data = data;
-    }
 
     /// <summary>
     /// A constructor that accepts <paramref name="data"/>.
@@ -44,8 +47,9 @@ public class Result<T>
     /// </summary>
     /// <param name="data">Constructor parameter of type <paramref name="data"/></param>
     /// <param name="successMessage">Constructor parameter of type <paramref name="successMessage"/></param>
-    private Result(T data, string successMessage) : this(data)
+    internal Result(T data, string successMessage)
     {
+        Data = data;
         SuccessMessage = successMessage;
     }
     
@@ -62,7 +66,7 @@ public class Result<T>
     public T? Data { get; set; }
 
     /// <summary>
-    /// Use this property to accurately determine the exact status of the Result
+    /// Use this property to accurately determine the exact Result status
     /// </summary>
     [JsonInclude]
     public ResultStatus Status { get; protected set; } = ResultStatus.Ok;
