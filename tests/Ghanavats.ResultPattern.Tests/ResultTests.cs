@@ -30,6 +30,36 @@ public class ResultTests
     }
 
     [Fact]
+    public void ResultSuccessWithDataAndSuccessMessage_ShouldCorrectlySetStatusWithData()
+    {
+        //arrange/act
+        var actual = Result<string>.Success("SomeValue", "Successfully executed.");
+        
+        //assert
+        actual.ShouldNotBeNull();
+        actual.ErrorMessages.ShouldBeEmpty();
+        actual.Status.ShouldBe(ResultStatus.Ok);
+        actual.Data.ShouldNotBeNull();
+        actual.Data.GetType().Name.ShouldBe("String");
+        actual.IsSuccess.ShouldBeTrue();
+        actual.SuccessMessage.ShouldBe("Successfully executed.");
+    }
+    
+    [Fact]
+    public void ResultSuccessWithData_ShouldCorrectlySetStatusWithData()
+    {
+        //arrange/act
+        var actual = Result<int>.Success(1234);
+        
+        //assert
+        actual.ShouldNotBeNull();
+        actual.ErrorMessages.ShouldBeEmpty();
+        actual.Status.ShouldBe(ResultStatus.Ok);
+        actual.Data.ShouldBe(1234);
+        actual.IsSuccess.ShouldBeTrue();
+    }
+    
+    [Fact]
     public void ResultError_ShouldCorrectlySetStatusWithNullData()
     {
         //arrange/act
@@ -39,6 +69,19 @@ public class ResultTests
         actual.ShouldNotBeNull();
         actual.ErrorMessages.ShouldNotBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Error);
+        actual.Data.ShouldBeNull();
+        actual.IsSuccess.ShouldBeFalse();
+    }
+    
+    [Fact]
+    public void ResultNotFound_ShouldCorrectlySetStatus()
+    {
+        //arrange/act
+        var actual = Result<string>.NotFound();
+        
+        //assert
+        actual.ShouldNotBeNull();
+        actual.Status.ShouldBe(ResultStatus.NotFound);
         actual.Data.ShouldBeNull();
         actual.IsSuccess.ShouldBeFalse();
     }
