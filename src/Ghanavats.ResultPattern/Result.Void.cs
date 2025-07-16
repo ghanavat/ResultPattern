@@ -1,4 +1,6 @@
 ﻿using Ghanavats.ResultPattern.Enums;
+using Ghanavats.ResultPattern.Extensions;
+using Ghanavats.ResultPattern.Models;
 
 namespace Ghanavats.ResultPattern;
 
@@ -52,50 +54,15 @@ public class Result : Result<Result>
         ErrorMessages = [errorMessage]
     };
 
-    public static Result Aggregate(params Result[] results)
+    public new static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
+        params Result<Result>[] results)
     {
-        var resultLocal = new Result();
-
-        PopulateErrorMessagesForError();
-        PopulateValidationErrors();
-
-        if (resultLocal.Status == ResultStatus.None)
-        {
-            resultLocal.Status = ResultStatus.Ok;
-        }
-
-        return resultLocal;
-
-        void PopulateErrorMessagesForError()
-        {
-            var anyErrors = results.Where(x => x.Status == ResultStatus.Error).ToArray();
-            resultLocal.Status = anyErrors.Length > 0 ? ResultStatus.Error : ResultStatus.None;
-
-            var errorMessagesLocal = new List<string>();
-            foreach (var result in anyErrors)
+        return results
+            .GroupBy(result => result.Status)
+            .Select(whatIWant => new AggregateResultsModel
             {
-                errorMessagesLocal.AddRange(result.ErrorMessages);
-            }
-
-            resultLocal.ErrorMessages = errorMessagesLocal;
-        }
-        void PopulateValidationErrors()
-        {
-            var anyValidationErrors = results.Where(x => x.Status == ResultStatus.Invalid).ToArray();
-            
-            if (anyValidationErrors.Length > 0 
-                && resultLocal.Status != ResultStatus.Error)
-            {
-                resultLocal.Status = ResultStatus.Invalid;
-            }
-            
-            var validationErrorsLocal = new List<ValidationError>();
-            foreach (var result in anyValidationErrors)
-            {
-                validationErrorsLocal.AddRange(result.ValidationErrors);
-            }
-
-            resultLocal.ValidationErrors = validationErrorsLocal;
-        }
+                Status = whatIWant.Key,
+                Messages = results.GetMessages(whatIWant.Key, includeValidationErrors)
+            }).ToList().AsReadOnly();
     }
 }

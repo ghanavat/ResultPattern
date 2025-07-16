@@ -1,6 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Ghanavats.ResultPattern.Enums;
+using Ghanavats.ResultPattern.Extensions;
+using Ghanavats.ResultPattern.Models;
 
 [assembly: InternalsVisibleTo(assemblyName: "Ghanavats.ResultPattern.Tests")]
 
@@ -138,6 +140,19 @@ public class Result<T>
     public static Result<T> Invalid(IEnumerable<ValidationError> validationErrors)
     {
         return new Result<T>(ResultStatus.Invalid) { ValidationErrors = validationErrors };
+    }
+    
+    public static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
+        params Result<T>[] results)
+    {
+        return results
+            .GroupBy(result => result.Status)
+            .Select(whatIWant => new AggregateResultsModel
+            {
+                Status = whatIWant.Key,
+                TypeName = typeof(T).Name,
+                Messages = results.GetMessages(whatIWant.Key, includeValidationErrors)
+            }).ToList().AsReadOnly();
     }
 
     /// <summary>
