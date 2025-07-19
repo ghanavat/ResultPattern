@@ -26,4 +26,4 @@ jobs:
     - name: Build
       run: dotnet build Ghanavats.ResultPattern.sln --configuration Release
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test tests/Ghanavats.ResultPattern.Tests/Ghanavats.ResultPattern.Tests.csproj

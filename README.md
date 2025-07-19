@@ -2,10 +2,14 @@
 A Robust and Flexible Result Handling Framework for Modern Applications
 
 ## Overview
-Ghanavats.ResultPattern is a comprehensive framework designed to bring consistency 
+Ghanavats.ResultPattern is a small/simple, unambitious framework designed to bring consistency 
 and flexibility to result handling in your applications. 
 Whether you need to return simple success/error outcomes or handle complex validation scenarios, 
 this solution provides the tools you need to implement robust result patterns effortlessly.
+
+The idea behind this was to learn the Result Pattern by implementing it in a good way. 
+The plan was not and is not to get all developers, worldwide, to adopt it. 
+Instead, to teach myself, and maybe if I am lucky, to show you what it may look like. 
 
 ## The solution includes
 

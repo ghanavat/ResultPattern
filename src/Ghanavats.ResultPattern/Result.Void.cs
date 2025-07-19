@@ -1,4 +1,6 @@
 ﻿using Ghanavats.ResultPattern.Enums;
+using Ghanavats.ResultPattern.Extensions;
+using Ghanavats.ResultPattern.Models;
 
 namespace Ghanavats.ResultPattern;
 
@@ -10,15 +12,19 @@ public class Result : Result<Result>
 {
     /// <summary>
     /// Private constructor that is used in this class.
-    /// No need to set Status here as its default id OK.
+    /// No need to set Status here as its default is OK.
     /// </summary>
-    private Result() { }
+    private Result()
+    {
+    }
 
     /// <summary>
     /// A constructor that accepts <paramref name="status"/>
     /// </summary>
     /// <param name="status"></param>
-    private Result(ResultStatus status) : base(status) { }
+    private Result(ResultStatus status) : base(status)
+    {
+    }
 
     /// <summary>
     /// Represents a successful operation without a return type
@@ -47,4 +53,30 @@ public class Result : Result<Result>
     {
         ErrorMessages = [errorMessage]
     };
+
+    /// <summary>
+    /// Represents the not found result for non-generic scenarios
+    /// </summary>
+    /// <returns>Result with NotFound status</returns>
+    public new static Result NotFound() => new(ResultStatus.NotFound);
+
+    /// <summary>
+    /// To gather all non-success results of type Result (non-generic) into a single object.
+    /// </summary>
+    /// <param name="includeValidationErrors">Indicates whether a full ValidationError collection should be aggregated.
+    /// Default is false.</param>
+    /// <param name="results">Array of all Results (non-generic)</param>
+    /// <returns>A Read-Only Collection of Aggregate Results Model</returns>
+    public static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
+        params Result[] results)
+    {
+        return results
+            .GroupBy(result => result.Status)
+            .Skip(results.Count(x => x.Status is ResultStatus.Ok or ResultStatus.NotFound))
+            .Select(whatIWant => new AggregateResultsModel
+            {
+                Status = whatIWant.Key,
+                Messages = results.GetMessages(whatIWant.Key, includeValidationErrors)
+            }).ToList().AsReadOnly();
+    }
 }

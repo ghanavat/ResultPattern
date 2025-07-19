@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ghanavats.ResultPattern.Tests", "tests\Ghanavats.ResultPattern.Tests\Ghanavats.ResultPattern.Tests.csproj", "{857C6761-2A3B-4919-8FA7-433E2B2157B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,8 +25,13 @@ Global
 		{654CA5E2-972C-4561-BA0E-B532E1327A15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{654CA5E2-972C-4561-BA0E-B532E1327A15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{654CA5E2-972C-4561-BA0E-B532E1327A15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{857C6761-2A3B-4919-8FA7-433E2B2157B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{857C6761-2A3B-4919-8FA7-433E2B2157B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{857C6761-2A3B-4919-8FA7-433E2B2157B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{857C6761-2A3B-4919-8FA7-433E2B2157B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{654CA5E2-972C-4561-BA0E-B532E1327A15} = {211150B0-9A81-462E-8D30-C00B45504AD6}
+		{857C6761-2A3B-4919-8FA7-433E2B2157B4} = {78FEF537-F8DF-4722-BEB6-091C57BA134A}
 	EndGlobalSection
 EndGlobal
