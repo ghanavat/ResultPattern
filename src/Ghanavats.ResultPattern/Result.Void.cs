@@ -54,11 +54,25 @@ public class Result : Result<Result>
         ErrorMessages = [errorMessage]
     };
 
-    public new static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
-        params Result<Result>[] results)
+    /// <summary>
+    /// Represents the not found result for non-generic scenarios
+    /// </summary>
+    /// <returns>Result with NotFound status</returns>
+    public new static Result NotFound() => new(ResultStatus.NotFound);
+
+    /// <summary>
+    /// To gather all non-success results of type Result (non-generic) into a single object.
+    /// </summary>
+    /// <param name="includeValidationErrors">Indicates whether a full ValidationError collection should be aggregated.
+    /// Default is false.</param>
+    /// <param name="results">Array of all Results (non-generic)</param>
+    /// <returns>A Read-Only Collection of Aggregate Results Model</returns>
+    public static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
+        params Result[] results)
     {
         return results
             .GroupBy(result => result.Status)
+            .Skip(results.Count(x => x.Status is ResultStatus.Ok or ResultStatus.NotFound))
             .Select(whatIWant => new AggregateResultsModel
             {
                 Status = whatIWant.Key,

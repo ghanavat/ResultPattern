@@ -4,35 +4,35 @@ namespace Ghanavats.ResultPattern.Extensions;
 
 public static class ResultExtensions
 {
-    public static IReadOnlyCollection<object?> GetMessages<T>(this Result<T>[] results, ResultStatus status,
+    internal static IReadOnlyCollection<object?> GetMessages(this Result[] results, ResultStatus status,
         bool includeValidationErrors = false)
     {
         switch (status)
         {
             case ResultStatus.Error:
-            return GetErrorMessages();
+                return GetErrorMessages();
             case ResultStatus.Invalid:
-            return includeValidationErrors
-                ? GetValidationErrors()
-                : GetValidationMessages();
-            case ResultStatus.None:
+                return includeValidationErrors
+                    ? GetValidationErrors()
+                    : GetValidationMessages();
             case ResultStatus.Ok:
-            return GetSuccessMessages();
+            case ResultStatus.None:
             case ResultStatus.NotFound:
+                throw new NotSupportedException("Not supported result status.");
             default:
-            return [];
+                throw new InvalidOperationException("Operation not supported.");
         }
-        
+
         IReadOnlyCollection<string> GetErrorMessages()
         {
             var resultErrors = results
-                .Where(error => error.Status == ResultStatus.Error
-                                && error.ErrorMessages.Any())
+                .Where(result => result.Status == ResultStatus.Error
+                                 && result.ErrorMessages.Any())
                 .SelectMany(error => error.ErrorMessages).ToList();
-            
+
             return resultErrors;
         }
-        
+
         IReadOnlyCollection<string?> GetValidationMessages()
         {
             return results
@@ -41,21 +41,13 @@ public static class ResultExtensions
                 .SelectMany(invalidMessages => invalidMessages.ValidationErrors
                     .Select(x => x.ErrorMessage)).ToList();
         }
-        
+
         IReadOnlyCollection<ValidationError> GetValidationErrors()
         {
             return results
                 .Where(invalids => invalids.ValidationErrors.Any()
                                    && invalids.Status == ResultStatus.Invalid)
                 .SelectMany(invalidMessages => invalidMessages.ValidationErrors).ToList();
-        }
-        
-        IReadOnlyCollection<string?> GetSuccessMessages()
-        {
-            return results
-                .Where(x => x.Status == ResultStatus.Ok
-                            && x.ErrorMessages.Any())
-                .SelectMany(error => error.ErrorMessages).ToList();
         }
     }
 }

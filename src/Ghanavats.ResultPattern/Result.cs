@@ -1,8 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Ghanavats.ResultPattern.Enums;
-using Ghanavats.ResultPattern.Extensions;
-using Ghanavats.ResultPattern.Models;
 
 [assembly: InternalsVisibleTo(assemblyName: "Ghanavats.ResultPattern.Tests")]
 
@@ -141,22 +139,9 @@ public class Result<T>
     {
         return new Result<T>(ResultStatus.Invalid) { ValidationErrors = validationErrors };
     }
-    
-    public static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
-        params Result<T>[] results)
-    {
-        return results
-            .GroupBy(result => result.Status)
-            .Select(whatIWant => new AggregateResultsModel
-            {
-                Status = whatIWant.Key,
-                TypeName = typeof(T).Name,
-                Messages = results.GetMessages(whatIWant.Key, includeValidationErrors)
-            }).ToList().AsReadOnly();
-    }
 
     /// <summary>
-    /// An operator to automatically convert the return type in a method to the type being returned
+    /// An operator to automatically convert the generic T type to Result of type T 
     /// </summary>
     /// <param name="data">The return data</param>
     public static implicit operator Result<T>(T data) => new(data);
