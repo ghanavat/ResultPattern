@@ -11,7 +11,7 @@ public class ValidationError
         ValidationErrorType = validationError;
     }
 
-    public string? ErrorMessage { get; init; }
-    public string? ErrorCode { get; init; }
+    public string ErrorMessage { get; init; }
+    public string ErrorCode { get; init; }
     public ValidationErrorType ValidationErrorType { get; init; }
 }

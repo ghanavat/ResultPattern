@@ -15,6 +15,6 @@ public static class FluentValidationFailureExtension
             : input.Errors
                 .Select(validationFailure => new ValidationError(validationFailure.ErrorMessage,
                     validationFailure.ErrorCode,
-                    (ValidationErrorType)validationFailure.Severity));
+                    Enum.Parse<ValidationErrorType>(validationFailure.Severity.ToString())));
     }
 }

@@ -149,6 +149,7 @@ public class ResultTests
         {
             item.ErrorMessage.ShouldNotBeNullOrEmpty();
             item.ErrorCode.ShouldNotBeNullOrEmpty();
+            item.ValidationErrorType.ShouldBe(ValidationErrorType.Error);
         }
     }
     
@@ -166,7 +167,7 @@ public class ResultTests
     }
     
     [Fact]
-    public void Result_ShouldAggregateAllResults_WhenItIsCalledWithMultipleResults_AndIncludeValidationErrorsIsFalse()
+    public void Result_ShouldAggregateAllResultsCorrectly_WhenItIsCalledWithMultipleResultsWithoutFullValidationErrorsExtension()
     {
         //arrange
         var result1 = Result.Invalid([new ValidationError("Validation error Jan", "3434", ValidationErrorType.Error)]);
@@ -178,7 +179,7 @@ public class ResultTests
         var result6 = Result.Error("Failure Error 3009");
         
         //act
-        var actual = Result.Aggregate(false, result1, result2, result3, result4, result5, result6);
+        var actual = Result.Aggregate(result1, result2, result3, result4, result5, result6);
         
         //assert
         actual.ShouldNotBeNull();
@@ -186,7 +187,16 @@ public class ResultTests
         actual.Count.ShouldBe(2);
         
         actual.ToList().Where(x => x.Status == ResultStatus.Error).ShouldNotBeEmpty();
-        actual.ToList().Where(x => x.Status == ResultStatus.Invalid).ShouldNotBeEmpty();
+        
+        var invalidResult = actual.ToList().Where(x => x.Status == ResultStatus.Invalid).ToList();
+        invalidResult.ShouldNotBeEmpty();
+        invalidResult.Count.ShouldBe(1);
+
+        foreach (var item in invalidResult)
+        {
+            item.ValidationErrors.ShouldBeEmpty();
+            item.Messages.ShouldNotBeEmpty();
+        }
         
         foreach (var item in actual.ToList())
         {
@@ -196,7 +206,7 @@ public class ResultTests
     }
     
     [Fact]
-    public void Result_ShouldAggregateAllResults_WhenItIsCalledWithMultipleResults_AndIncludeValidationErrorsIsTrue()
+    public void Result_ShouldAggregateAllResultsCorrectly_WhenItIsCalledWithMultipleResults_AndWithFullValidationErrorsExtensionUsed()
     {
         //arrange
         var result1 = Result.Invalid([new ValidationError("Validation error April", "666", ValidationErrorType.Error)]);
@@ -208,7 +218,8 @@ public class ResultTests
         var result6 = Result.Error("Failure Error 111111");
         
         //act
-        var actual = Result.Aggregate(true, result1, result2, result3, result4, result5, result6);
+        var actual = Result.Aggregate([result1, result2, result3, result4, result5, result6])
+            .WithFullValidationErrors();
         
         //assert
         actual.ShouldNotBeNull();
@@ -216,35 +227,16 @@ public class ResultTests
         actual.Count.ShouldBe(2);
         
         actual.ToList().Where(x => x.Status == ResultStatus.Error).ShouldNotBeEmpty();
-        actual.ToList().Where(x => x.Status == ResultStatus.Invalid).ShouldNotBeEmpty();
-
-        var validationErrors = actual.Where(x => x.Status == ResultStatus.Invalid)
-            .SelectMany(y => y.Messages.Select(x => x)).ToList().AsReadOnly();
         
-        validationErrors.ShouldNotBeEmpty();
+        var invalidResult = actual.ToList().Where(x => x.Status == ResultStatus.Invalid).ToList();
+        invalidResult.ShouldNotBeEmpty();
+        invalidResult.Count.ShouldBe(1);
 
-        foreach (var item in validationErrors)
+        foreach (var item in invalidResult)
         {
-            item.ShouldBeAssignableTo<ValidationError>();
-            
-            var validationError = item as ValidationError;
-            validationError.ShouldNotBeNull();
-            validationError.ValidationErrorType.ShouldBe(ValidationErrorType.Error);
-            validationError.ErrorMessage.ShouldNotBeEmpty();
-            validationError.ErrorMessage.ShouldContain("Validation error");
-        }
-        
-        var errors = actual.Where(x => x.Status == ResultStatus.Error)
-            .SelectMany(y => y.Messages.Select(x => x)).ToList().AsReadOnly();
-        
-        errors.ShouldNotBeEmpty();
-
-        foreach (var item in errors)
-        {
-            item.ShouldBeAssignableTo<string>();
-            
-            var errorMessage = item as string;
-            errorMessage.ShouldNotBeNull();
+            item.ValidationErrors.ShouldNotBeEmpty();
+            item.ValidationErrors.Count.ShouldBe(3);
+            item.Messages.ShouldBeEmpty();
         }
     }
 
@@ -256,7 +248,7 @@ public class ResultTests
         var result2 = Result.NotFound();
         
         //act
-        var action = Result.Aggregate(true, result1, result2);
+        var action = Result.Aggregate([result1, result2]);
         
         //assert
         action.ShouldNotBeNull();
@@ -273,9 +265,9 @@ public class ResultTests
         
         //act
         //Action action = () => Result.Aggregate(true, result1, result2, result3);
-        var actual = Result.Aggregate(true, result1, result2, result3);
+        var actual = Result.Aggregate([result1, result2, result3]).WithFullValidationErrors();
         
-        //assert
+        //assert 
         actual.ShouldNotBeNull();
         actual.ShouldNotBeEmpty();
         actual.Count.ShouldBe(1);
@@ -331,137 +323,4 @@ public class ResultTests
         actual.SuccessMessage.ShouldBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Ok);
     }
-    
-    // [Fact]
-    // public void ResultOfTypeString_ShouldAggregateAllResults_WhenItIsCalledWithMultipleResults_AndIncludeValidationErrorsIsFalse()
-    // {
-    //     //arrange
-    //     var result1 = Result<string>.Invalid([new ValidationError("Validation error April", "666", ValidationErrorType.Error)]);
-    //     var result2 = Result<string>.Invalid([new ValidationError("Validation error May", "777", ValidationErrorType.Error)]);
-    //     
-    //     var result4 = Result<string>.Error("Failure Error 999");
-    //     var result5 = Result<string>.Error("Failure Error 101010");
-    //     
-    //     //act
-    //     var actual = Result<string>.Aggregate(false, result1, result2, result4, result5);
-    //     
-    //     //assert
-    //     var actualList = actual.ToList();
-    //     actualList.ShouldNotBeEmpty();
-    //     actualList.Where(x => x.Status == ResultStatus.Error).ShouldNotBeEmpty();
-    //     actualList.Where(x => x.Status == ResultStatus.Invalid).ShouldNotBeEmpty();
-    //
-    //     foreach (var item in actualList)
-    //     {
-    //         item.TypeName.ShouldNotBeNull();
-    //         item.TypeName.GetType().Name.ShouldBe("String");
-    //     }
-    //     
-    //     var validationErrors = actual.Where(x => x.Status == ResultStatus.Invalid)
-    //         .SelectMany(y => y.Messages.Select(x => x)).ToList().AsReadOnly();
-    //     
-    //     validationErrors.ShouldNotBeEmpty();
-    //
-    //     foreach (var item in validationErrors)
-    //     {
-    //         item.ShouldBeAssignableTo<string>();
-    //         
-    //         var validationError = item as string;
-    //         validationError.ShouldNotBeNull();
-    //         validationError.ShouldContain("Validation error");
-    //     }
-    //     
-    //     var errors = actual.Where(x => x.Status == ResultStatus.Error)
-    //         .SelectMany(y => y.Messages.Select(x => x)).ToList().AsReadOnly();
-    //     
-    //     errors.ShouldNotBeEmpty();
-    //     
-    //     foreach (var item in errors)
-    //     {
-    //         item.ShouldBeAssignableTo<string>();
-    //         
-    //         var errorMessage = item as string;
-    //         errorMessage.ShouldNotBeNull();
-    //     }
-    // }
-    //
-    // [Fact]
-    // public void ResultOfComplexType_ShouldAggregateAllResults_WhenItIsCalledWithMultipleResults_AndIncludeValidationErrorsIsFalse()
-    // {
-    //     //arrange
-    //     var result1 = Result<DummyResponseModel>.Invalid([new ValidationError("Validation error June", "668787", ValidationErrorType.Error)]);
-    //     var result2 = Result<DummyResponseModel>.Invalid([new ValidationError("Validation error July", "4847", ValidationErrorType.Error)]);
-    //     
-    //     var result4 = Result<DummyResponseModel>.Error("Failure Error 89393");
-    //     var result5 = Result<DummyResponseModel>.Error("Failure Error 111112");
-    //     
-    //     //act
-    //     var actual = Result<DummyResponseModel>.Aggregate(false, result1, result2, result4, result5);
-    //     
-    //     //assert
-    //     var actualList = actual.ToList();
-    //     actualList.ShouldNotBeEmpty();
-    //     actualList.Where(x => x.Status == ResultStatus.Error).ShouldNotBeEmpty();
-    //     actualList.Where(x => x.Status == ResultStatus.Invalid).ShouldNotBeEmpty();
-    //
-    //     foreach (var item in actualList)
-    //     {
-    //         item.TypeName.ShouldNotBeNull();
-    //         item.TypeName.ShouldBe(nameof(DummyResponseModel));
-    //     }
-    //     
-    //     var validationErrors = actual.Where(x => x.Status == ResultStatus.Invalid)
-    //         .SelectMany(y => y.Messages.Select(x => x)).ToList().AsReadOnly();
-    //     
-    //     validationErrors.ShouldNotBeEmpty();
-    //
-    //     foreach (var item in validationErrors)
-    //     {
-    //         item.ShouldBeAssignableTo<string>();
-    //         
-    //         var validationError = item as string;
-    //         validationError.ShouldNotBeNull();
-    //         validationError.ShouldContain("Validation error");
-    //     }
-    //     
-    //     var errors = actual.Where(x => x.Status == ResultStatus.Error)
-    //         .SelectMany(y => y.Messages.Select(x => x)).ToList().AsReadOnly();
-    //     
-    //     errors.ShouldNotBeEmpty();
-    //     
-    //     foreach (var item in errors)
-    //     {
-    //         item.ShouldBeAssignableTo<string>();
-    //         
-    //         var errorMessage = item as string;
-    //         errorMessage.ShouldNotBeNull();
-    //     }
-    // }
-    
-    // [Fact]
-    // public void Result_ShouldAggregateAllSuccessResults()
-    // {
-    //     //arrange
-    //     var result1 = Result.Success();
-    //     var result2 = Result<DummyResponseModel>.Success(new DummyResponseModel
-    //         {
-    //             DummyFieldOne = "SomeData"
-    //         }, 
-    //         "Success message two.");
-    //     
-    //     //act
-    //     var actual = Result<DummyResponseModel>.Aggregate(false, result1, result2);
-    //     
-    //     //assert
-    //     var actualList = actual.ToList();
-    //     actualList.ShouldNotBeEmpty();
-    //     actualList.Where(x => x.Status == ResultStatus.Ok).ShouldNotBeEmpty();
-    //
-    //     foreach (var item in actualList)
-    //     {
-    //         item.TypeName.ShouldNotBeNull();
-    //         item.TypeName.ShouldBe(nameof(DummyResponseModel));
-    //         item.Messages.ShouldNotBeEmpty();
-    //     }
-    // }
 }

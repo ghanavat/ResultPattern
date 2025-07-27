@@ -63,12 +63,9 @@ public class Result : Result<Result>
     /// <summary>
     /// To gather all non-success results of type Result (non-generic) into a single object.
     /// </summary>
-    /// <param name="includeValidationErrors">Indicates whether a full ValidationError collection should be aggregated.
-    /// Default is false.</param>
     /// <param name="results">Array of all Results (non-generic)</param>
     /// <returns>A Read-Only Collection of Aggregate Results Model</returns>
-    public static IReadOnlyCollection<AggregateResultsModel> Aggregate(bool includeValidationErrors = false,
-        params Result[] results)
+    public static IReadOnlyCollection<AggregateResultsModel> Aggregate(params Result[] results)
     {
         return results
             .GroupBy(result => result.Status)
@@ -76,7 +73,13 @@ public class Result : Result<Result>
             .Select(whatIWant => new AggregateResultsModel
             {
                 Status = whatIWant.Key,
-                Messages = results.GetMessages(whatIWant.Key, includeValidationErrors)
+                Messages = whatIWant.Key switch
+                {
+                    ResultStatus.Error => whatIWant.GetErrorMessages(),
+                    ResultStatus.Invalid => whatIWant.GetValidationMessages(),
+                    _ => throw new NotSupportedException($"Status '{whatIWant.Key}' is not supported.")
+                },
+                OriginalResults = whatIWant.ToList().AsReadOnly() // stored quietly for future use
             }).ToList().AsReadOnly();
     }
 }
