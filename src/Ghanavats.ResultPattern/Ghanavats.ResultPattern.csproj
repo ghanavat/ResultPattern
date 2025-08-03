@@ -12,7 +12,7 @@
         <PackageTags>result-pattern</PackageTags>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/ghanavat/ResultPattern</RepositoryUrl>
-        <Version>1.1.1</Version>
+        <Version>1.1.2</Version>
         
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
