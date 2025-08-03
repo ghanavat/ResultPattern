@@ -30,6 +30,7 @@ public class Result<T>
     internal Result(ResultStatus status)
     {
         Status = status;
+        Data = default!;
     }
 
     /// <summary>
@@ -39,8 +40,8 @@ public class Result<T>
     /// It is used in Result.Void to return an instance of
     /// Success status without needing to pass any extra types.
     /// </remarks>
-    protected internal Result() { }
-
+    protected Result() { Data = default!; }
+    
     /// <summary>
     /// A constructor that accepts <paramref name="data"/>.
     /// It is used by the 'Success' method when a Success Message needed to be set.
@@ -63,7 +64,7 @@ public class Result<T>
     /// Data property of type <typeparamref name="T"/> which holds the details of the result as a JSON field.
     /// </summary>
     [JsonInclude]
-    public T? Data { get; set; }
+    public T Data { get; init; }
 
     /// <summary>
     /// Use this property to accurately determine the exact Result status
@@ -150,13 +151,13 @@ public class Result<T>
     /// 
     /// </summary>
     /// <param name="result"></param>
-    public static implicit operator T(Result<T> result) => result.Data!;
+    public static implicit operator T(Result<T> result) => result.Data;
 
     /// <summary>
     /// An operator to automatically convert the return type in a method to the default state
     /// </summary>
     /// <param name="result"></param>
-    public static implicit operator Result<T>(Result result) => new(default(T)!)
+    public static implicit operator Result<T>(Result result) => new()
     {
         Status = result.Status,
         ErrorMessages = result.ErrorMessages,

@@ -218,7 +218,7 @@ public class ResultTests
         var result6 = Result.Error("Failure Error 111111");
         
         //act
-        var actual = Result.Aggregate([result1, result2, result3, result4, result5, result6])
+        var actual = Result.Aggregate(result1, result2, result3, result4, result5, result6)
             .WithFullValidationErrors();
         
         //assert
@@ -264,8 +264,7 @@ public class ResultTests
         var result3 = Result.Error("Something went wrong");
         
         //act
-        //Action action = () => Result.Aggregate(true, result1, result2, result3);
-        var actual = Result.Aggregate([result1, result2, result3]).WithFullValidationErrors();
+        var actual = Result.Aggregate(result1, result2, result3).WithFullValidationErrors();
         
         //assert 
         actual.ShouldNotBeNull();
@@ -291,13 +290,13 @@ public class ResultTests
     }
     
     [Fact]
-    public void Result_ImplicitOperator_ShouldCorrectlyConvertTheResultOfGenericTypeToTheInnerType()
+    public void Result_ImplicitOperator_ShouldCorrectlyConvertTheResultOfGenericTypeToTheDataType()
     {
         //arrange
         var sut = new DummyFeatureService();
         
         //act
-        var actual = sut.DoSomethingImplicitConversionOfResultGenericToInnerType();
+        var actual = sut.DoSomethingImplicitConversionOfResultGenericToDataType();
 
         //assert
         actual.ShouldNotBeNull();

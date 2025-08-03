@@ -12,7 +12,7 @@ public class DummyFeatureService
         return response;
     }
     
-    public DummyResponseModel DoSomethingImplicitConversionOfResultGenericToInnerType()
+    public DummyResponseModel DoSomethingImplicitConversionOfResultGenericToDataType()
     {
         var response = new DummyResponseModel
         {

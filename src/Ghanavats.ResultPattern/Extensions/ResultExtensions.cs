@@ -24,6 +24,30 @@ public static class ResultExtensions
                 .Select(x => x.ErrorMessage)).ToList();
     }
     
+    /// <summary>
+    /// Enhances aggregated results by replacing validation messages with full 
+    /// <see cref="ValidationError"/> details for <see cref="ResultStatus.Invalid"/> results.
+    /// </summary>
+    /// <param name="aggregated">
+    /// The aggregated collection produced by <see cref="Result.Aggregate(Result[])"/>.
+    /// </param>
+    /// <returns>
+    /// A new read-only collection of <see cref="AggregateResultsModel"/> objects. 
+    /// For <see cref="ResultStatus.Invalid"/> results, <see cref="AggregateResultsModel.ValidationErrors"/> 
+    /// is populated with detailed validation errors,
+    /// and <see cref="AggregateResultsModel.Messages"/> is cleared.
+    /// </returns>
+    /// <remarks>
+    /// Use this method when you require full validation detail, such as for API responses, 
+    /// while avoiding duplication between <see cref="AggregateResultsModel.Messages"/> 
+    /// and <see cref="AggregateResultsModel.ValidationErrors"/>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var aggregated = Result.Aggregate(results)
+    ///                        .WithFullValidationErrors();
+    /// </code>
+    /// </example>
     public static IReadOnlyCollection<AggregateResultsModel> WithFullValidationErrors(
         this IReadOnlyCollection<AggregateResultsModel> aggregated)
     {
