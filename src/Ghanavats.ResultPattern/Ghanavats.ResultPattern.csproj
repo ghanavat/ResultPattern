@@ -24,5 +24,6 @@
         <None Include="docs\README.md" Pack="True" PackagePath=""/>
         <None Include="LICENSE" Pack="True" PackagePath=""/>
         <None Remove="licenses\LICENSE"/>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 </Project>

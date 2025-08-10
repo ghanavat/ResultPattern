@@ -77,7 +77,7 @@ public class Result : Result<Result>
     /// Use <c>Aggregate</c> to collate outcomes from multiple operations, 
     /// such as service calls or validation checks, into a simplified summary.
     /// By default, <see cref="AggregateResultsModel.Messages"/> contains error and validation messages as strings.
-    /// For structured validation details, call <see cref="ResultExtensions.WithFullValidationErrors"/> 
+    /// For structured validation details, call <see cref="AggregateExtensions.WithFullValidationErrors"/> 
     /// on the aggregated result.
     /// </remarks>
     /// <example>

@@ -3,7 +3,7 @@ using Ghanavats.ResultPattern.Models;
 
 namespace Ghanavats.ResultPattern.Extensions;
 
-public static class ResultExtensions
+public static class AggregateExtensions
 {    
     public static IReadOnlyCollection<string> GetErrorMessages(this IEnumerable<Result> results)
     {
