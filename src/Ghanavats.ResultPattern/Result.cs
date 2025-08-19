@@ -1,6 +1,9 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using FluentValidation.Results;
 using Ghanavats.ResultPattern.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 [assembly: InternalsVisibleTo(assemblyName: "Ghanavats.ResultPattern.Tests")]
 
@@ -13,6 +16,73 @@ namespace Ghanavats.ResultPattern;
 /// <typeparam name="T"></typeparam>
 public class Result<T>
 {
+    /// <summary>
+    /// Gets the data payload associated with a successful result.
+    /// </summary>
+    /// <remarks>
+    /// This property is only meaningful when <see cref="Status"/> is <see cref="ResultStatus.Ok"/>.  
+    /// It is included in the JSON response for consumers.  
+    /// </remarks>
+    [JsonInclude]
+    public T Data { get; init; }
+    
+    /// <summary>
+    /// Gets the status of the result (e.g. Ok, Error, Invalid, NotFound).
+    /// </summary>
+    /// <remarks>
+    /// This property drives internal logic and mapping to <c>ProblemDetails</c> or <c>ValidationProblemDetails</c>.  
+    /// It is excluded from JSON output, as it would otherwise duplicate the semantics already conveyed
+    /// by the HTTP status code and/or <c>ProblemDetails</c>.
+    /// </remarks>
+    [JsonIgnore]
+    public ResultStatus Status { get; private init; } = ResultStatus.Ok;
+
+    /// <summary>
+    /// Gets the classification of the error to map to an appropriate HTTP status code.
+    /// </summary>
+    /// <remarks>
+    /// Used internally by the mapping layer to determine which HTTP status code to emit (e.g. 401, 403, 409, 500).  
+    /// This property is excluded from JSON output as it is only relevant for transport mapping and not intended
+    /// for clients.
+    /// </remarks>
+    [JsonIgnore]
+    public ErrorKind? Kind { get; protected init; }
+    
+    /// <summary>
+    /// Gets the collection of error messages associated with this result.
+    /// </summary>
+    /// <remarks>
+    /// Used internally to populate <c>ProblemDetails.Detail</c>.  
+    /// It is excluded from JSON output to prevent leaking implementation details or duplicate error data.  
+    /// Consumers should rely on <c>ProblemDetails</c> or <c>ValidationProblemDetails</c> instead.
+    /// </remarks>
+    [JsonIgnore]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public IEnumerable<string> ErrorMessages { get; protected init; } = [];
+
+    /// <summary>
+    /// Gets or sets a success message associated with a successful result.
+    /// </summary>
+    /// <remarks>
+    /// Included in the JSON response when present.
+    /// Useful for conveying additional context alongside a successful payload.  
+    /// </remarks>
+    [JsonInclude]
+    public string SuccessMessage { get; protected set; } = string.Empty;
+
+    /// <summary>
+    /// Gets a dictionary of validation errors grouped by field name.
+    /// </summary>
+    /// <remarks>
+    /// Keys represent field/property names and values are arrays of validation error messages.  
+    /// This property is excluded from JSON output.  
+    /// It is only used internally to initialise <see cref="ValidationProblemDetails.Errors"/> when mapping results
+    /// to API responses.
+    /// </remarks>
+    [JsonIgnore]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    internal IReadOnlyDictionary<string, string[]>? ValidationErrorsByField { get; init; }
+
     /// <summary>
     /// A constructor that accepts <paramref name="data"/>.
     /// </summary>
@@ -55,113 +125,161 @@ public class Result<T>
     }
     
     /// <summary>
-    /// Use this property to easily determine if the status is OK or not
+    /// Creates a successful <see cref="Result{T}"/> containing the specified <paramref name="data"/>.
     /// </summary>
-    [JsonIgnore]
-    public bool IsSuccess => Status is ResultStatus.Ok;
-
-    /// <summary>
-    /// Data property of type <typeparamref name="T"/> which holds the details of the result as a JSON field.
-    /// </summary>
-    [JsonInclude]
-    public T Data { get; init; }
-
-    /// <summary>
-    /// Use this property to accurately determine the exact Result status
-    /// </summary>
-    [JsonInclude]
-    public ResultStatus Status { get; protected set; } = ResultStatus.Ok;
-
-    /// <summary>
-    /// Error Message collection
-    /// </summary>
-    [JsonInclude]
-    public IEnumerable<string> ErrorMessages { get; protected set; } = [];
-
-    /// <summary>
-    /// Set is protected and accessible by derived classes
-    /// </summary>
-    [JsonInclude]
-    public IEnumerable<ValidationError> ValidationErrors { get; protected set; } = [];
-
-    /// <summary>
-    /// Use this property to access the success message
-    /// </summary>
-    [JsonInclude]
-    public string SuccessMessage { get; protected set; } = string.Empty;
-
-    /// <summary>
-    /// Successful operation with a value as a result
-    /// </summary>
-    /// <param name="data">Data parameter for setting value to it</param>
-    /// <returns>A Result object of <typeparamref name="T"/> </returns>
+    /// <param name="data">
+    /// The value to associate with the result.  
+    /// This represents the payload returned when the operation completes successfully.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> instance with <see cref="ResultStatus.Ok"/> status and the provided <paramref name="data"/>.
+    /// </returns>
+    /// <remarks>
+    /// This factory is the primary way to indicate a successful operation.  
+    /// Be mindful that <paramref name="data"/> is not validated here;
+    /// if you pass <c>null</c>, the <see cref="Result{T}.Data"/> will be <c>null</c>, 
+    /// which can lead to <see cref="NullReferenceException"/> if consumed carelessly.  
+    /// Use only when the operation truly represents success.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var result = Result&lt;User&gt;.Success(new User("Alice"));
+    ///
+    /// if (result.IsSuccess)
+    /// {
+    ///     Console.WriteLine($"User created: {result.Data.Name}");
+    /// }
+    /// </code>
+    /// </example>
     public static Result<T> Success(T data)
     {
         return new Result<T>(data);
     }
 
     /// <summary>
-    /// Successful operation with a value as a result and a custom message.
+    /// Creates a successful <see cref="Result{T}"/> with the specified <paramref name="data"/> 
+    /// and an accompanying <paramref name="successMessage"/>.
     /// </summary>
-    /// <param name="data">Data parameter for setting value to it</param>
-    /// <param name="successMessage">A custom success message</param>
-    /// <returns>A Result object of <typeparamref name="T"/> </returns>
+    /// <param name="data">The value returned by the successful operation.</param>
+    /// <param name="successMessage">A message describing the success outcome.</param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> instance with <see cref="ResultStatus.Ok"/> status, 
+    /// containing the provided <paramref name="data"/> and <paramref name="successMessage"/>.
+    /// </returns>
+    /// <example>
+    /// <code>
+    /// var result = Result&lt;Order&gt;.Success(order, "Order created successfully");
+    /// Console.WriteLine(result.SuccessMessage); // "Order created successfully"
+    /// </code>
+    /// </example>
+
     public static Result<T> Success(T data, string successMessage)
     {
         return new Result<T>(data, successMessage);
     }
 
     /// <summary>
-    /// Represents a situation where an error occurred.
+    /// Creates a failed <see cref="Result{T}"/> with the specified error message and classification.
     /// </summary>
-    /// <param name="errorMessage">A custom error message</param>
-    /// <returns>A Result object of <typeparamref name="T"/></returns>
-    public static Result<T> Error(string errorMessage)
+    /// <param name="errorMessage">
+    /// A descriptive message explaining the cause of the error. 
+    /// This value will be included in the internal <c>ErrorMessages</c> collection and may be mapped 
+    /// into <see cref="ProblemDetails.Detail"/> during API response generation.
+    /// </param>
+    /// <param name="errorKind">
+    /// An optional classification of the error that determines which HTTP status code 
+    /// is emitted when mapped to an API response.
+    /// Defaults to <see cref="ErrorKind.Unknown"/>.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> representing a failed operation.
+    /// The <see cref="Result{T}.Status"/> will be <c>Error</c>.
+    /// </returns>
+    /// <remarks>
+    /// Use this method when an operation fails due to business logic or an application-level error.  
+    /// For validation-related errors, prefer <c>Invalid</c> instead,
+    /// as it maps to <see cref="ValidationProblemDetails"/>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// return Result&lt;User&gt;.Error("Database connection failed", ErrorKind.Database);
+    /// </code>
+    /// </example>
+    public static Result<T> Error(string errorMessage, ErrorKind errorKind = ErrorKind.Unknown)
     {
-        return new Result<T>(ResultStatus.Error) { ErrorMessages = [errorMessage] };
+        return new Result<T>(ResultStatus.Error)
+        {
+            ErrorMessages = [errorMessage],
+            Kind = errorKind
+        };
     }
 
     /// <summary>
-    /// Represents a situation where the resource is not found.
+    /// Creates a <see cref="Result{T}"/> representing a not found outcome.
     /// </summary>
-    /// <returns>A Result object of <typeparamref name="T"/></returns>
+    /// <returns>
+    /// A <see cref="Result{T}"/> instance with <see cref="ResultStatus.NotFound"/> status,
+    /// indicating that the requested resource could not be found.
+    /// </returns>
+    /// <example>
+    /// <code>
+    /// var result = Result&lt;Customer&gt;.NotFound();
+    /// if (result.IsNotFound)
+    /// {
+    ///     Console.WriteLine("Customer not found.");
+    /// }
+    /// </code>
+    /// </example>
     public static Result<T> NotFound()
     {
         return new Result<T>(ResultStatus.NotFound);
     }
 
     /// <summary>
-    /// Represents an invalid result with validation errors.
-    /// Use this when validation in your application failed.
+    /// Creates an <see cref="Result{T}"/> representing an invalid operation,
+    /// based on the supplied <see cref="FluentValidation.Results.ValidationResult"/>.
     /// </summary>
-    /// <param name="validationErrors">A list of validation errors</param>
-    /// <returns>A Result object of <typeparamref name="T"/></returns>
-    public static Result<T> Invalid(IEnumerable<ValidationError> validationErrors)
+    /// <param name="validationResult">
+    /// The <see cref="FluentValidation.Results.ValidationResult"/> produced by FluentValidation.  
+    /// Its validation failures are transformed into a <c>ValidationErrorsByField</c> dictionary,
+    /// which is later mapped into <see cref="ValidationProblemDetails.Errors"/> when returning API responses.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> with <see cref="ResultStatus.Invalid"/>.  
+    /// This result indicates that input validation failed and should be returned to the API consumer
+    /// as <see cref="ValidationProblemDetails"/>.
+    /// </returns>
+    /// <remarks>
+    /// This method is tightly integrated with FluentValidation.  
+    /// If you are not using FluentValidation, you should construct the dictionary of validation errors 
+    /// manually and assign it to <c>ValidationErrorsByField</c>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var validator = new UserValidator();
+    /// var validationResult = validator.Validate(userInput);
+    ///
+    /// if (!validationResult.IsValid)
+    /// {
+    ///     var result = Result&lt;User&gt;.Invalid(validationResult);
+    ///     return await result.ToActionResultAsync(controller); // maps to ValidationProblemDetails
+    /// }
+    /// </code>
+    /// </example>
+    public static Result<T> Invalid(ValidationResult validationResult)
     {
-        return new Result<T>(ResultStatus.Invalid) { ValidationErrors = validationErrors };
+        return new Result<T>(ResultStatus.Invalid)
+        {
+            ValidationErrorsByField = validationResult.ToDictionary().AsReadOnly()
+        };
     }
-
-    /// <summary>
-    /// An operator to automatically convert the generic T type to Result of type T 
-    /// </summary>
-    /// <param name="data">The return data</param>
+    
     public static implicit operator Result<T>(T data) => new(data);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="result"></param>
     public static implicit operator T(Result<T> result) => result.Data;
-
-    /// <summary>
-    /// An operator to automatically convert the return type in a method to the default state
-    /// </summary>
-    /// <param name="result"></param>
     public static implicit operator Result<T>(Result result) => new()
     {
         Status = result.Status,
         ErrorMessages = result.ErrorMessages,
-        SuccessMessage = result.SuccessMessage,
-        ValidationErrors = result.ValidationErrors
+        SuccessMessage = result.SuccessMessage
     };
 }

@@ -1,6 +1,7 @@
-﻿using Ghanavats.ResultPattern.Enums;
-using Ghanavats.ResultPattern.Extensions;
-using Ghanavats.ResultPattern.Models;
+﻿using FluentValidation.Results;
+using Ghanavats.ResultPattern.Aggregate;
+using Ghanavats.ResultPattern.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ghanavats.ResultPattern;
 
@@ -14,13 +15,17 @@ public class Result : Result<Result>
     /// Private constructor that is used in this class.
     /// No need to set Status here as its default is OK.Í
     /// </summary>
-    private Result() { }
+    private Result()
+    {
+    }
 
     /// <summary>
     /// A constructor that accepts <paramref name="status"/>
     /// </summary>
     /// <param name="status"></param>
-    private Result(ResultStatus status) : base(status) { }
+    private Result(ResultStatus status) : base(status)
+    {
+    }
 
     /// <summary>
     /// Represents a successful operation without a return type
@@ -29,38 +34,95 @@ public class Result : Result<Result>
     public static Result Success() => new();
 
     /// <summary>
-    /// Represents invalid result with validation errors.
+    /// Creates a failed <see cref="Result"/> with the specified error message and classification.
     /// </summary>
-    /// <param name="validationErrors"></param>
-    /// <returns>An Invalid Result</returns>
-    public new static Result Invalid(IEnumerable<ValidationError> validationErrors)
+    /// <param name="errorMessage">
+    /// A descriptive message explaining the cause of the error. 
+    /// This value will be included in the internal <c>ErrorMessages</c> collection and may be mapped 
+    /// into <see cref="ProblemDetails.Detail"/> during API response generation.
+    /// </param>
+    /// <param name="errorKind">
+    /// An optional classification of the error that determines which HTTP status code 
+    /// is emitted when mapped to an API response.
+    /// Defaults to <see cref="ErrorKind.Unknown"/>.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result"/> representing a failed operation.
+    /// The <see cref="ResultStatus"/> will be <c>Error</c>.
+    /// </returns>
+    /// <remarks>
+    /// Use this method when an operation fails due to business logic or an application-level error.  
+    /// For validation-related errors, prefer <c>Invalid</c> instead,
+    /// as it maps to <see cref="ValidationProblemDetails"/>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// return Result.Error("Database connection failed", ErrorKind.Database);
+    /// </code>
+    /// </example>
+    public new static Result Error(string errorMessage, ErrorKind errorKind = ErrorKind.Unknown) =>
+        new(ResultStatus.Error)
+        {
+            ErrorMessages = [errorMessage],
+            Kind = errorKind
+        };
+
+    /// <summary>
+    /// Creates an <see cref="Result"/> representing an invalid operation,
+    /// based on the supplied <see cref="FluentValidation.Results.ValidationResult"/>.
+    /// </summary>
+    /// <param name="validationResult">
+    /// The <see cref="FluentValidation.Results.ValidationResult"/> produced by FluentValidation.  
+    /// Its validation failures are transformed into a <c>ValidationErrorsByField</c> dictionary,
+    /// which is later mapped into <see cref="ValidationProblemDetails.Errors"/> when returning API responses.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result"/> with <see cref="ResultStatus.Invalid"/>.  
+    /// This result indicates that input validation failed and should be returned to the API consumer
+    /// as <see cref="ValidationProblemDetails"/>.
+    /// </returns>
+    /// <remarks>
+    /// This method is tightly integrated with FluentValidation.  
+    /// If you are not using FluentValidation, you should construct the dictionary of validation errors 
+    /// manually and assign it to <c>ValidationErrorsByField</c>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var validator = new UserValidator();
+    /// var validationResult = validator.Validate(userInput);
+    ///
+    /// if (!validationResult.IsValid)
+    /// {
+    ///     var result = Result.Invalid(validationResult);
+    ///     return await result.ToActionResultAsync(controller); // maps to ValidationProblemDetails
+    /// }
+    /// </code>
+    /// </example>
+    public new static Result Invalid(ValidationResult validationResult)
     {
         return new Result(ResultStatus.Invalid)
         {
-            ValidationErrors = validationErrors
+            ValidationErrorsByField = validationResult.ToDictionary().AsReadOnly()
         };
     }
 
     /// <summary>
-    /// Represents the error result with the error message
+    /// Creates a <see cref="Result"/> representing a not found outcome.
     /// </summary>
-    /// <returns>An Error Result</returns>
-    public new static Result Error(string errorMessage) => new(ResultStatus.Error)
-    {
-        ErrorMessages = [errorMessage]
-    };
-
-    /// <summary>
-    /// Represents the not found result for non-generic scenarios
-    /// </summary>
-    /// <returns>Result with NotFound status</returns>
+    /// <returns>
+    /// A <see cref="Result"/> instance with <see cref="ResultStatus.NotFound"/> status,
+    /// indicating that the requested resource could not be found.
+    /// </returns>
+    /// <example>
+    /// <code>
+    /// var result = Result.NotFound();
+    /// if (result.IsNotFound)
+    /// {
+    ///     Console.WriteLine("Customer not found.");
+    /// }
+    /// </code>
+    /// </example>
     public new static Result NotFound() => new(ResultStatus.NotFound);
-
-    // /// <summary>
-    // /// To gather all non-success results of type Result (non-generic) into a single object.
-    // /// </summary>
-    // /// <param name="results">Array of all the Results (non-generic)</param>
-    // /// <returns>A Read-Only Collection of Aggregate Results Model</returns>
     
     /// <summary>
     /// Aggregates a collection of <see cref="Result"/> instances into a grouped summary by <see cref="ResultStatus"/>.
@@ -77,7 +139,7 @@ public class Result : Result<Result>
     /// Use <c>Aggregate</c> to collate outcomes from multiple operations, 
     /// such as service calls or validation checks, into a simplified summary.
     /// By default, <see cref="AggregateResultsModel.Messages"/> contains error and validation messages as strings.
-    /// For structured validation details, call <see cref="AggregateExtensions.WithFullValidationErrors"/> 
+    /// For structured validation details, call <see cref="Aggregate.AggregateFeatures.WithFullValidationErrors" />
     /// on the aggregated result.
     /// </remarks>
     /// <example>
@@ -104,6 +166,9 @@ public class Result : Result<Result>
                 {
                     ResultStatus.Error => whatIWant.GetErrorMessages(),
                     ResultStatus.Invalid => whatIWant.GetValidationMessages(),
+                    ResultStatus.Ok
+                        or ResultStatus.NotFound =>
+                        throw new NotSupportedException($"Status '{whatIWant.Key}' is not supported."),
                     _ => throw new NotSupportedException($"Status '{whatIWant.Key}' is not supported.")
                 },
                 OriginalResults = whatIWant.ToList().AsReadOnly() // stored quietly for future use

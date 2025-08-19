@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
 using Ghanavats.ResultPattern.Enums;
-using Ghanavats.ResultPattern.Extensions;
+using Ghanavats.ResultPattern.Helpers;
 using Ghanavats.ResultPattern.Tests.DummyData;
 using Shouldly;
 
@@ -28,7 +28,7 @@ public class ResultTests
         
         //Assert
         sut.ShouldNotBeNull();
-        sut.IsSuccess.ShouldBeTrue();
+        sut.IsSuccess().ShouldBeTrue();
         sut.Status.ShouldBe(ResultStatus.Ok);
     }
 
@@ -44,7 +44,7 @@ public class ResultTests
         actual.Status.ShouldBe(ResultStatus.Ok);
         actual.Data.ShouldNotBeNull();
         actual.Data.GetType().Name.ShouldBe("String");
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
         actual.SuccessMessage.ShouldBe("Successfully executed.");
     }
     
@@ -59,7 +59,7 @@ public class ResultTests
         actual.ErrorMessages.ShouldBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Ok);
         actual.Data.ShouldBe(1234);
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
     
     [Fact]
@@ -73,7 +73,7 @@ public class ResultTests
         actual.ErrorMessages.ShouldBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Ok);
         actual.Data.ShouldBeNull();
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
     
     [Fact]
@@ -87,7 +87,7 @@ public class ResultTests
         actual.ErrorMessages.ShouldNotBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Error);
         actual.Data.ShouldBeNull();
-        actual.IsSuccess.ShouldBeFalse();
+        actual.IsSuccess().ShouldBeFalse();
     }
     
     [Fact]
@@ -107,15 +107,14 @@ public class ResultTests
             ]
         };
         
-        var actual = Result.Invalid(expectedValidationResult.PopulateValidationErrors());
+        var actual = Result.Invalid(expectedValidationResult);
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ValidationErrors.ShouldNotBeEmpty();
         actual.ErrorMessages.ShouldBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Invalid);
         actual.Data.ShouldBeNull();
-        actual.IsSuccess.ShouldBeFalse();
+        actual.IsSuccess().ShouldBeFalse();
     }
     
     [Fact]
@@ -135,21 +134,20 @@ public class ResultTests
             ]
         };
         
-        var actual = Result<DummyResponseModel>.Invalid(expectedValidationResult.PopulateValidationErrors());
+        var actual = Result<DummyResponseModel>.Invalid(expectedValidationResult);
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ValidationErrors.ShouldNotBeEmpty();
+        actual.ValidationErrorsByField.ShouldNotBeNull();
         actual.ErrorMessages.ShouldBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Invalid);
         actual.Data.ShouldBeNull();
-        actual.IsSuccess.ShouldBeFalse();
+        actual.IsSuccess().ShouldBeFalse();
 
-        foreach (var item in actual.ValidationErrors)
+        foreach (var item in actual.ValidationErrorsByField)
         {
-            item.ErrorMessage.ShouldNotBeNullOrEmpty();
-            item.ErrorCode.ShouldNotBeNullOrEmpty();
-            item.ValidationErrorType.ShouldBe(ValidationErrorType.Error);
+            item.Key.ShouldNotBeNullOrEmpty();
+            item.Value.ShouldNotBeNull();
         }
     }
     
@@ -163,114 +161,7 @@ public class ResultTests
         actual.ShouldNotBeNull();
         actual.Status.ShouldBe(ResultStatus.NotFound);
         actual.Data.ShouldBeNull();
-        actual.IsSuccess.ShouldBeFalse();
-    }
-    
-    [Fact]
-    public void Result_ShouldAggregateAllResultsCorrectly_WhenItIsCalledWithMultipleResultsWithoutFullValidationErrorsExtension()
-    {
-        //arrange
-        var result1 = Result.Invalid([new ValidationError("Validation error Jan", "3434", ValidationErrorType.Error)]);
-        var result2 = Result.Invalid([new ValidationError("Validation error Feb", "5554", ValidationErrorType.Error)]);
-        var result3 = Result.Invalid([new ValidationError("Validation error March", "6678", ValidationErrorType.Error)]);
-        
-        var result4 = Result.Error("Failure Error 234");
-        var result5 = Result.Error("Failure Error 2676");
-        var result6 = Result.Error("Failure Error 3009");
-        
-        //act
-        var actual = Result.Aggregate(result1, result2, result3, result4, result5, result6);
-        
-        //assert
-        actual.ShouldNotBeNull();
-        actual.ShouldNotBeEmpty();
-        actual.Count.ShouldBe(2);
-        
-        actual.ToList().Where(x => x.Status == ResultStatus.Error).ShouldNotBeEmpty();
-        
-        var invalidResult = actual.ToList().Where(x => x.Status == ResultStatus.Invalid).ToList();
-        invalidResult.ShouldNotBeEmpty();
-        invalidResult.Count.ShouldBe(1);
-
-        foreach (var item in invalidResult)
-        {
-            item.ValidationErrors.ShouldBeEmpty();
-            item.Messages.ShouldNotBeEmpty();
-        }
-        
-        foreach (var item in actual.ToList())
-        {
-            item.Messages.ShouldNotBeEmpty();
-            item.Messages.ShouldBeAssignableTo<IReadOnlyCollection<string>>();
-        }
-    }
-    
-    [Fact]
-    public void Result_ShouldAggregateAllResultsCorrectly_WhenItIsCalledWithMultipleResults_AndWithFullValidationErrorsExtensionUsed()
-    {
-        //arrange
-        var result1 = Result.Invalid([new ValidationError("Validation error April", "666", ValidationErrorType.Error)]);
-        var result2 = Result.Invalid([new ValidationError("Validation error May", "777", ValidationErrorType.Error)]);
-        var result3 = Result.Invalid([new ValidationError("Validation error June", "888", ValidationErrorType.Error)]);
-        
-        var result4 = Result.Error("Failure Error 999");
-        var result5 = Result.Error("Failure Error 101010");
-        var result6 = Result.Error("Failure Error 111111");
-        
-        //act
-        var actual = Result.Aggregate(result1, result2, result3, result4, result5, result6)
-            .WithFullValidationErrors();
-        
-        //assert
-        actual.ShouldNotBeNull();
-        actual.ShouldNotBeEmpty();
-        actual.Count.ShouldBe(2);
-        
-        actual.ToList().Where(x => x.Status == ResultStatus.Error).ShouldNotBeEmpty();
-        
-        var invalidResult = actual.ToList().Where(x => x.Status == ResultStatus.Invalid).ToList();
-        invalidResult.ShouldNotBeEmpty();
-        invalidResult.Count.ShouldBe(1);
-
-        foreach (var item in invalidResult)
-        {
-            item.ValidationErrors.ShouldNotBeEmpty();
-            item.ValidationErrors.Count.ShouldBe(3);
-            item.Messages.ShouldBeEmpty();
-        }
-    }
-
-    [Fact]
-    public void Result_ShouldIgnoreAggregatingNoneOkNotFoundStatuses()
-    {
-        //arrange
-        var result1 = Result.Success();
-        var result2 = Result.NotFound();
-        
-        //act
-        var action = Result.Aggregate([result1, result2]);
-        
-        //assert
-        action.ShouldNotBeNull();
-        action.ShouldBeEmpty();
-    }
-    
-    [Fact]
-    public void Result_ShouldIgnoreAggregatingNoneOkNotFound_WhenMixedWithErrorStatusResults()
-    {
-        //arrange
-        var result1 = Result.Success();
-        var result2 = Result.NotFound();
-        var result3 = Result.Error("Something went wrong");
-        
-        //act
-        var actual = Result.Aggregate(result1, result2, result3).WithFullValidationErrors();
-        
-        //assert 
-        actual.ShouldNotBeNull();
-        actual.ShouldNotBeEmpty();
-        actual.Count.ShouldBe(1);
-        actual.ToList()[0].Status.ShouldBe(ResultStatus.Error);
+        actual.IsSuccess().ShouldBeFalse();
     }
     
     [Fact]
@@ -285,7 +176,7 @@ public class ResultTests
         //assert
         actual.ShouldNotBeNull();
         actual.ShouldBeOfType<Result<DummyResponseModel>>();
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
         actual.Data.ShouldNotBeNull();
     }
     
@@ -315,10 +206,9 @@ public class ResultTests
         //assert
         actual.ShouldNotBeNull();
         actual.ShouldBeOfType<Result<DummyResponseModel>>();
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
         actual.Data.ShouldBeNull();
         actual.ErrorMessages.ShouldBeEmpty();
-        actual.ValidationErrors.ShouldBeEmpty();
         actual.SuccessMessage.ShouldBeEmpty();
         actual.Status.ShouldBe(ResultStatus.Ok);
     }

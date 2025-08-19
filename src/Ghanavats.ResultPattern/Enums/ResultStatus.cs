@@ -2,7 +2,6 @@
 
 public enum ResultStatus
 {
-    None,
     Ok,
     Error,
     NotFound,

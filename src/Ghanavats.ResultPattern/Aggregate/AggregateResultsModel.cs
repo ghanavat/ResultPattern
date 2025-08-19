@@ -1,8 +1,7 @@
 using System.ComponentModel;
 using Ghanavats.ResultPattern.Enums;
-using Ghanavats.ResultPattern.Extensions;
 
-namespace Ghanavats.ResultPattern.Models;
+namespace Ghanavats.ResultPattern.Aggregate;
 
 /// <summary>
 /// Represents a grouped summary of aggregated <see cref="Result"/> instances,
@@ -12,8 +11,8 @@ namespace Ghanavats.ResultPattern.Models;
 /// Instances of this class are returned by <see cref="Result.Aggregate(Result[])"/>. 
 /// By default, <see cref="Messages"/> contains plain text messages for both 
 /// <see cref="ResultStatus.Error"/> and <see cref="ResultStatus.Invalid"/> results. 
-/// When <see cref="AggregateExtensions.WithFullValidationErrors"/> is applied, 
-/// <see cref="ValidationErrors"/> is populated for <see cref="ResultStatus.Invalid"/> results 
+/// When <see cref="AggregateFeatures.WithFullValidationErrors"/> is applied, 
+/// <see cref="ValidationErrorsPair"/> is populated for <see cref="ResultStatus.Invalid"/> results 
 /// and <see cref="Messages"/> is cleared to avoid duplication.
 /// </remarks>
 public record AggregateResultsModel
@@ -27,16 +26,16 @@ public record AggregateResultsModel
     /// Gets a collection of plain text messages associated with the aggregated results.
     /// For <see cref="ResultStatus.Error"/> results, contains error messages.
     /// For <see cref="ResultStatus.Invalid"/> results, contains validation messages unless
-    /// <see cref="AggregateExtensions.WithFullValidationErrors"/> is used.
+    /// <see cref="AggregateFeatures.WithFullValidationErrors"/> is used.
     /// </summary>
     public IReadOnlyCollection<string?> Messages { get; init; } = [];
-
+    
     /// <summary>
-    /// Gets a collection of detailed <see cref="ValidationError"/> objects for 
+    /// Gets a collection of detailed <see cref="ValidationErrorsPair"/> objects for 
     /// <see cref="ResultStatus.Invalid"/> results, available only when 
-    /// <see cref="AggregateExtensions.WithFullValidationErrors"/> is applied.
+    /// <see cref="AggregateFeatures.WithFullValidationErrors"/> is applied.
     /// </summary>
-    public IReadOnlyCollection<ValidationError> ValidationErrors { get; init; } = [];
+    public IReadOnlyCollection<KeyValuePair<string, string[]>> ValidationErrorsPair { get; init; } = [];
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal IReadOnlyCollection<Result> OriginalResults { get; init; } = [];
