@@ -38,6 +38,16 @@ public class Result<T>
     public ResultStatus Status { get; private init; } = ResultStatus.Ok;
 
     /// <summary>
+    /// Gets or sets a success message associated with a successful result.
+    /// </summary>
+    /// <remarks>
+    /// Included in the JSON response when present.
+    /// Useful for conveying additional context alongside a successful payload.  
+    /// </remarks>
+    [JsonInclude]
+    public string SuccessMessage { get; protected set; } = string.Empty;
+
+    /// <summary>
     /// Gets the classification of the error to map to an appropriate HTTP status code.
     /// </summary>
     /// <remarks>
@@ -47,7 +57,7 @@ public class Result<T>
     /// </remarks>
     [JsonIgnore]
     public ErrorKind? Kind { get; protected init; }
-    
+
     /// <summary>
     /// Gets the collection of error messages associated with this result.
     /// </summary>
@@ -58,17 +68,7 @@ public class Result<T>
     /// </remarks>
     [JsonIgnore]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public IEnumerable<string> ErrorMessages { get; protected init; } = [];
-
-    /// <summary>
-    /// Gets or sets a success message associated with a successful result.
-    /// </summary>
-    /// <remarks>
-    /// Included in the JSON response when present.
-    /// Useful for conveying additional context alongside a successful payload.  
-    /// </remarks>
-    [JsonInclude]
-    public string SuccessMessage { get; protected set; } = string.Empty;
+    internal IEnumerable<string> ErrorMessages { get; init; } = [];
 
     /// <summary>
     /// Gets a dictionary of validation errors grouped by field name.
@@ -80,8 +80,7 @@ public class Result<T>
     /// to API responses.
     /// </remarks>
     [JsonIgnore]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal IReadOnlyDictionary<string, string[]>? ValidationErrorsByField { get; init; }
+    public IReadOnlyDictionary<string, string[]>? ValidationErrorsByField { get; protected init; }
 
     /// <summary>
     /// A constructor that accepts <paramref name="data"/>.
@@ -145,7 +144,7 @@ public class Result<T>
     /// <code>
     /// var result = Result&lt;User&gt;.Success(new User("Alice"));
     ///
-    /// if (result.IsSuccess)
+    /// if (result.IsSuccess())
     /// {
     ///     Console.WriteLine($"User created: {result.Data.Name}");
     /// }
@@ -224,7 +223,7 @@ public class Result<T>
     /// <example>
     /// <code>
     /// var result = Result&lt;Customer&gt;.NotFound();
-    /// if (result.IsNotFound)
+    /// if (result.IsNotFound())
     /// {
     ///     Console.WriteLine("Customer not found.");
     /// }
@@ -251,8 +250,9 @@ public class Result<T>
     /// </returns>
     /// <remarks>
     /// This method is tightly integrated with FluentValidation.  
-    /// If you are not using FluentValidation, you should construct the dictionary of validation errors 
-    /// manually and assign it to <c>ValidationErrorsByField</c>.
+    /// If you are not using FluentValidation,
+    /// use the <see cref="Invalid(IDictionary{string, string[]})"/> factory to supply
+    /// your own field-to-messages map.
     /// </remarks>
     /// <example>
     /// <code>
@@ -274,12 +274,61 @@ public class Result<T>
         };
     }
     
+    /// <summary>
+    /// Creates an <see cref="Result{T}"/> representing an invalid operation
+    /// using the provided field-to-messages dictionary.
+    /// </summary>
+    /// <param name="validationErrors">
+    /// A dictionary of validation errors where the key is the field or property name,
+    /// and the value is an array of validation error messages associated with that field.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> with <see cref="ResultStatus.Invalid"/> status,
+    /// containing the supplied <paramref name="validationErrors"/> in 
+    /// <see cref="ValidationErrorsByField"/>.
+    /// </returns>
+    /// <remarks>
+    /// This overload is useful when you are not using FluentValidation, or when you
+    /// already have validation errors represented as a dictionary.  
+    /// The dictionary is defensively copied to ensure immutability and prevent external modification.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var errors = new Dictionary&lt;string, string[]&gt;
+    /// {
+    ///     ["Email"] = new[] { "Email is required." },
+    ///     ["Password"] = new[] { "Password must be at least 8 characters." }
+    /// };
+    ///
+    /// var result = Result&lt;User&gt;.Invalid(errors);
+    /// if (result.IsInvalid())
+    /// {
+    ///     // result.ValidationErrorsByField now contains the errors
+    /// }
+    /// </code>
+    /// </example>
+    public static Result<T> Invalid(IDictionary<string, string[]> validationErrors)
+    {
+        // Defensively copy to prevent external mutation and normalise comparer
+        var copy = new Dictionary<string, string[]>(validationErrors.Count, StringComparer.Ordinal);
+        
+        foreach (var kvp in validationErrors)
+            copy[kvp.Key] = kvp.Value.ToArray();
+
+        return new Result<T>(ResultStatus.Invalid)
+        {
+            ValidationErrorsByField = copy
+        };
+    }
+    
     public static implicit operator Result<T>(T data) => new(data);
     public static implicit operator T(Result<T> result) => result.Data;
     public static implicit operator Result<T>(Result result) => new()
     {
         Status = result.Status,
         ErrorMessages = result.ErrorMessages,
-        SuccessMessage = result.SuccessMessage
+        SuccessMessage = result.SuccessMessage,
+        Kind = result.Kind,
+        ValidationErrorsByField = result.ValidationErrorsByField
     };
 }

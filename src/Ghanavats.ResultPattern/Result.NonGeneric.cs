@@ -105,6 +105,53 @@ public class Result : Result<Result>
             ValidationErrorsByField = validationResult.ToDictionary().AsReadOnly()
         };
     }
+    
+    /// <summary>
+    /// Creates an <see cref="Result"/> representing an invalid operation
+    /// using the provided field-to-messages dictionary.
+    /// </summary>
+    /// <param name="validationErrors">
+    /// A dictionary of validation errors where the key is the field or property name,
+    /// and the value is an array of validation error messages associated with that field.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result"/> with <see cref="ResultStatus.Invalid"/> status,
+    /// containing the supplied <paramref name="validationErrors"/> in 
+    /// <see cref="Result{T}.ValidationErrorsByField"/>.
+    /// </returns>
+    /// <remarks>
+    /// This overload is useful when you are not using FluentValidation, or when you
+    /// already have validation errors represented as a dictionary.  
+    /// The dictionary is defensively copied to ensure immutability and prevent external modification.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var errors = new Dictionary&lt;string, string[]&gt;
+    /// {
+    ///     ["Email"] = new[] { "Email is required." },
+    ///     ["Password"] = new[] { "Password must be at least 8 characters." }
+    /// };
+    ///
+    /// var result = Result.Invalid(errors);
+    /// if (result.IsInvalid())
+    /// {
+    ///     // result.ValidationErrorsByField now contains the errors
+    /// }
+    /// </code>
+    /// </example>
+    public new static Result Invalid(IDictionary<string, string[]> validationErrors)
+    {
+        // Defensively copy to prevent external mutation and normalise comparer
+        var copy = new Dictionary<string, string[]>(validationErrors.Count, StringComparer.Ordinal);
+        
+        foreach (var kvp in validationErrors)
+            copy[kvp.Key] = kvp.Value.ToArray();
+
+        return new Result(ResultStatus.Invalid)
+        {
+            ValidationErrorsByField = copy
+        };
+    }
 
     /// <summary>
     /// Creates a <see cref="Result"/> representing a not found outcome.
@@ -116,14 +163,14 @@ public class Result : Result<Result>
     /// <example>
     /// <code>
     /// var result = Result.NotFound();
-    /// if (result.IsNotFound)
+    /// if (result.IsNotFound())
     /// {
     ///     Console.WriteLine("Customer not found.");
     /// }
     /// </code>
     /// </example>
     public new static Result NotFound() => new(ResultStatus.NotFound);
-    
+
     /// <summary>
     /// Aggregates a collection of <see cref="Result"/> instances into a grouped summary by <see cref="ResultStatus"/>.
     /// </summary>

@@ -150,6 +150,42 @@ public class ResultTests
             item.Value.ShouldNotBeNull();
         }
     }
+
+    [Fact]
+    public void ResultInvalid_ShouldCorrectlyPopulateResultForNonFluentValidationConsumers()
+    {
+        //assert/act
+        var validationErrors = new Dictionary<string, string[]>
+        {
+            ["SomeKey"] = ["Some error message 1", "Some error message 2"]
+        };
+        
+        var expectedResult = Result<string>.Invalid(validationErrors);
+        
+        //arrange
+        expectedResult.ShouldNotBeNull();
+        expectedResult.ValidationErrorsByField.ShouldNotBeNull();
+        expectedResult.ValidationErrorsByField.ShouldNotBeEmpty();
+        expectedResult.IsInvalid().ShouldBeTrue();
+    }
+
+    [Fact]
+    public void ResultInvalidNonGeneric_ShouldCorrectlyPopulateResultForNonFluentValidationConsumers()
+    {
+        //assert/act
+        var validationErrors = new Dictionary<string, string[]>
+        {
+            ["SomeKey"] = ["Some error message 1", "Some error message 2"]
+        };
+        
+        var expectedResult = Result.Invalid(validationErrors);
+        
+        //arrange
+        expectedResult.ShouldNotBeNull();
+        expectedResult.ValidationErrorsByField.ShouldNotBeNull();
+        expectedResult.ValidationErrorsByField.ShouldNotBeEmpty();
+        expectedResult.IsInvalid().ShouldBeTrue();
+    }
     
     [Fact]
     public void ResultNotFound_ShouldCorrectlySetStatus()

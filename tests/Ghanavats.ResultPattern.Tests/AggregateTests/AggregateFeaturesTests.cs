@@ -4,7 +4,7 @@ using Ghanavats.ResultPattern.Aggregate;
 using Ghanavats.ResultPattern.Enums;
 using Shouldly;
 
-namespace Ghanavats.ResultPattern.Tests;
+namespace Ghanavats.ResultPattern.Tests.AggregateTests;
 
 public class AggregateFeaturesTests
 {
