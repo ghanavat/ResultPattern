@@ -86,8 +86,8 @@ public class ActionResultMappingTests
         objectResultValue.Status.ShouldBe(StatusCodes.Status500InternalServerError);
         objectResultValue.Extensions.ShouldNotBeNull();
         objectResultValue.Extensions.ShouldNotBeEmpty();
-        objectResultValue.Extensions["TraceId"].ShouldNotBeNull();
-        objectResultValue.Extensions["TraceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
+        objectResultValue.Extensions["traceId"].ShouldNotBeNull();
+        objectResultValue.Extensions["traceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
         objectResultValue.Instance.ShouldNotBeNull();
     }
 
@@ -113,8 +113,8 @@ public class ActionResultMappingTests
         objectResultValue.Status.ShouldBe(StatusCodes.Status500InternalServerError);
         objectResultValue.Extensions.ShouldNotBeNull();
         objectResultValue.Extensions.ShouldNotBeEmpty();
-        objectResultValue.Extensions["TraceId"].ShouldNotBeNull();
-        objectResultValue.Extensions["TraceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
+        objectResultValue.Extensions["traceId"].ShouldNotBeNull();
+        objectResultValue.Extensions["traceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
         objectResultValue.Instance.ShouldNotBeNull();
     }
     

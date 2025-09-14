@@ -1,6 +1,7 @@
 ﻿using FluentValidation.Results;
 using Ghanavats.ResultPattern.Aggregate;
 using Ghanavats.ResultPattern.Enums;
+using Ghanavats.ResultPattern.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ghanavats.ResultPattern;
@@ -171,54 +172,9 @@ public class Result : Result<Result>
     /// </example>
     public new static Result NotFound() => new(ResultStatus.NotFound);
 
-    /// <summary>
-    /// Aggregates a collection of <see cref="Result"/> instances into a grouped summary by <see cref="ResultStatus"/>.
-    /// </summary>
-    /// <param name="results">
-    /// The collection of <see cref="Result"/> objects to aggregate. 
-    /// Results with statuses <see cref="ResultStatus.Ok"/> and <see cref="ResultStatus.NotFound"/> are excluded.
-    /// </param>
-    /// <returns>
-    /// A read-only collection of <see cref="AggregateResultsModel"/> objects, 
-    /// each representing a grouped result with status and error information.
-    /// </returns>
-    /// <remarks>
-    /// Use <c>Aggregate</c> to collate outcomes from multiple operations, 
-    /// such as service calls or validation checks, into a simplified summary.
-    /// By default, <see cref="AggregateResultsModel.Messages"/> contains error and validation messages as strings.
-    /// For structured validation details, call <see cref="Aggregate.AggregateFeatures.WithFullValidationErrors" />
-    /// on the aggregated result.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// var results = new[]
-    /// {
-    ///     Result.Success(),
-    ///     Result.Error("Database connection failed."),
-    ///     Result.Invalid([new ValidationError("Email is required.")])
-    /// };
-    ///
-    /// var aggregated = Result.Aggregate(results);
-    /// </code>
-    /// </example>
+    /// <inheritdoc cref="AggregateBase.AggregateResults" />
     public static IReadOnlyCollection<AggregateResultsModel> Aggregate(params Result[] results)
     {
-        return results
-            .GroupBy(result => result.Status)
-            .Skip(results.Count(x => x.Status is ResultStatus.Ok or ResultStatus.NotFound))
-            .Select(whatIWant => new AggregateResultsModel
-            {
-                Status = whatIWant.Key,
-                Messages = whatIWant.Key switch
-                {
-                    ResultStatus.Error => whatIWant.GetErrorMessages(),
-                    ResultStatus.Invalid => whatIWant.GetValidationMessages(),
-                    ResultStatus.Ok
-                        or ResultStatus.NotFound =>
-                        throw new NotSupportedException($"Status '{whatIWant.Key}' is not supported."),
-                    _ => throw new NotSupportedException($"Status '{whatIWant.Key}' is not supported.")
-                },
-                OriginalResults = whatIWant.ToList().AsReadOnly() // stored quietly for future use
-            }).ToList().AsReadOnly();
+        return AggregateBase.AggregateResults(results);
     }
 }

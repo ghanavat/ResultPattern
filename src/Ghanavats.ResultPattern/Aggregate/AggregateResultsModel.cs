@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Ghanavats.ResultPattern.Enums;
 
 namespace Ghanavats.ResultPattern.Aggregate;
@@ -11,7 +10,6 @@ namespace Ghanavats.ResultPattern.Aggregate;
 /// Instances of this class are returned by <see cref="Result.Aggregate(Result[])"/>. 
 /// By default, <see cref="Messages"/> contains plain text messages for both 
 /// <see cref="ResultStatus.Error"/> and <see cref="ResultStatus.Invalid"/> results. 
-/// When <see cref="AggregateFeatures.WithFullValidationErrors"/> is applied, 
 /// <see cref="ValidationErrorsPair"/> is populated for <see cref="ResultStatus.Invalid"/> results 
 /// and <see cref="Messages"/> is cleared to avoid duplication.
 /// </remarks>
@@ -25,18 +23,12 @@ public record AggregateResultsModel
     /// <summary>
     /// Gets a collection of plain text messages associated with the aggregated results.
     /// For <see cref="ResultStatus.Error"/> results, contains error messages.
-    /// For <see cref="ResultStatus.Invalid"/> results, contains validation messages unless
-    /// <see cref="AggregateFeatures.WithFullValidationErrors"/> is used.
     /// </summary>
     public IReadOnlyCollection<string?> Messages { get; init; } = [];
     
     /// <summary>
     /// Gets a collection of detailed <see cref="ValidationErrorsPair"/> objects for 
-    /// <see cref="ResultStatus.Invalid"/> results, available only when 
-    /// <see cref="AggregateFeatures.WithFullValidationErrors"/> is applied.
+    /// <see cref="ResultStatus.Invalid"/> results, with property names and validation messages.
     /// </summary>
     public IReadOnlyCollection<KeyValuePair<string, string[]>> ValidationErrorsPair { get; init; } = [];
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal IReadOnlyCollection<Result> OriginalResults { get; init; } = [];
 }

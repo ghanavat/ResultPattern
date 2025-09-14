@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using Ghanavats.ResultPattern.Constants;
 using Ghanavats.ResultPattern.Enums;
+using Ghanavats.ResultPattern.Extensions;
 using Ghanavats.ResultPattern.Helpers;
+using Ghanavats.ResultPattern.ProblemDetailsHandlers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,7 +14,7 @@ internal static class MappingBase
 {
     internal static IActionResult ToActionResultBase(this Result result, ControllerBase controller)
     {
-        var statusCode = MappingErrorKind.MapStatusCode(result);
+        var statusCode = StatusCodesMapper.MapStatusCode(result);
 
         switch (result.Status)
         {
@@ -22,9 +24,9 @@ internal static class MappingBase
                 var problemDetailsForError = ProblemDetailsBuilder
                     .Build($"{result.Kind.ToString()}. ProblemDetailsConstants.ErrorTitle",
                         result.ErrorMessages.ToList()[0],
-                        statusCode);
+                        statusCode, result.Kind?.GetProblemDetailsTypeUri()!);
                 
-                problemDetailsForError.Extensions["TraceId"] = controller.HttpContext.TraceIdentifier;
+                problemDetailsForError.Extensions["traceId"] = controller.HttpContext.TraceIdentifier;
                 problemDetailsForError.Instance = controller.HttpContext.Request.Path;
                 
                 return controller.StatusCode(statusCode, problemDetailsForError);
@@ -34,7 +36,7 @@ internal static class MappingBase
                         ProblemDetailsConstants.NotFoundDetail, 
                     statusCode);
                 
-                problemDetailsForNotFound.Extensions["TraceId"] = controller.HttpContext.TraceIdentifier;
+                problemDetailsForNotFound.Extensions["traceId"] = controller.HttpContext.TraceIdentifier;
                 problemDetailsForNotFound.Instance = controller.HttpContext.Request.Path;
                 
                 return controller.NotFound(problemDetailsForNotFound);
@@ -57,7 +59,7 @@ internal static class MappingBase
 
     internal static IActionResult ToActionResultBase<T>(this Result<T> result, ControllerBase controller)
     {
-        var statusCode = MappingErrorKind.MapStatusCode(result);
+        var statusCode = StatusCodesMapper.MapStatusCode(result);
 
         switch (result.Status)
         {
@@ -67,9 +69,9 @@ internal static class MappingBase
                 var problemDetailsForError = ProblemDetailsBuilder
                     .Build($"{result.Kind.ToString()}. {ProblemDetailsConstants.ErrorTitle}",
                         result.ErrorMessages.ToList()[0],
-                        statusCode);
+                        statusCode, result.Kind?.GetProblemDetailsTypeUri()!);
                 
-                problemDetailsForError.Extensions["TraceId"] = controller.HttpContext.TraceIdentifier;
+                problemDetailsForError.Extensions["traceId"] = controller.HttpContext.TraceIdentifier;
                 problemDetailsForError.Instance = controller.HttpContext.Request.Path;
                 
                 return controller.StatusCode(statusCode, problemDetailsForError);
@@ -79,7 +81,7 @@ internal static class MappingBase
                         ProblemDetailsConstants.NotFoundDetail,
                         statusCode);
                 
-                problemDetailsForNotFound.Extensions["TraceId"] = controller.HttpContext.TraceIdentifier;
+                problemDetailsForNotFound.Extensions["traceId"] = controller.HttpContext.TraceIdentifier;
                 problemDetailsForNotFound.Instance = controller.HttpContext.Request.Path;
                 
                 return controller.NotFound(problemDetailsForNotFound);
@@ -102,24 +104,24 @@ internal static class MappingBase
 
     internal static IResult ToResultBase<T>(this Result<T> result)
     {
-        var statusCode = MappingErrorKind.MapStatusCode(result);
+        var statusCode = StatusCodesMapper.MapStatusCode(result);
         
         switch (result.Status)
         {
             case ResultStatus.Ok:
                 return Results.Ok(result);
             case ResultStatus.Error:
-                return new BetterProblemDetailsFactory<ProblemDetails>(statusCode,
+                return new BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>(statusCode,
                     ProblemDetailsBuilder
                         .Build($"{result.Kind.ToString()}. {ProblemDetailsConstants.ErrorTitle}",
                             result.ErrorMessages.ToList()[0],
-                            statusCode));
+                            statusCode, result.Kind?.GetProblemDetailsTypeUri()!));
             case ResultStatus.NotFound:
-                return new BetterProblemDetailsFactory<ProblemDetails>(statusCode,
+                return new BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>(statusCode,
                     ProblemDetailsBuilder
                         .Build(ProblemDetailsConstants.NotFoundTitle,
                             ProblemDetailsConstants.NotFoundDetail,
-                            statusCode));
+                            statusCode, result.Kind?.GetProblemDetailsTypeUri()!));
             case ResultStatus.Invalid:
                 var errors = result.ValidationErrorsByField != null
                              && result.ValidationErrorsByField.Any()
@@ -135,20 +137,20 @@ internal static class MappingBase
     
     internal static IResult ToResultBase(this Result result)
     {
-        var statusCode = MappingErrorKind.MapStatusCode(result);
+        var statusCode = StatusCodesMapper.MapStatusCode(result);
         
         switch (result.Status)
         {
             case ResultStatus.Ok:
                 return Results.Ok(result);
             case ResultStatus.Error:
-                return new BetterProblemDetailsFactory<ProblemDetails>(statusCode,
+                return new BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>(statusCode,
                     ProblemDetailsBuilder
                         .Build($"{result.Kind.ToString()}. {ProblemDetailsConstants.ErrorTitle}",
                             result.ErrorMessages.ToList()[0],
-                            statusCode));
+                            statusCode, result.Kind?.GetProblemDetailsTypeUri()!));
             case ResultStatus.NotFound:
-                return new BetterProblemDetailsFactory<ProblemDetails>(statusCode,
+                return new BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>(statusCode,
                     ProblemDetailsBuilder
                         .Build(ProblemDetailsConstants.NotFoundTitle,
                             ProblemDetailsConstants.NotFoundDetail,

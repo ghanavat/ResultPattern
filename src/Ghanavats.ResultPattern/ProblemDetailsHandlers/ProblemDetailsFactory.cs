@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
-namespace Ghanavats.ResultPattern.Helpers;
+
+namespace Ghanavats.ResultPattern.ProblemDetailsHandlers;
 
 internal sealed class BetterProblemDetailsFactory<TProblem> :
     IResult,
     IStatusCodeHttpResult,
     IContentTypeHttpResult,
     IValueHttpResult<TProblem>
-    where TProblem : ProblemDetails
+    where TProblem : Microsoft.AspNetCore.Mvc.ProblemDetails
 {
     public int? StatusCode { get; }
     public string ContentType => "application/problem+json";
@@ -22,9 +22,9 @@ internal sealed class BetterProblemDetailsFactory<TProblem> :
 
     public Task ExecuteAsync(HttpContext httpContext)
     {
-        Value.Extensions["TraceId"] = httpContext.TraceIdentifier;
         Value.Instance = httpContext.Request.Path;
-        
+        Value.Extensions["TraceId"] = httpContext.TraceIdentifier;
+
         httpContext.Response.StatusCode = StatusCode ?? StatusCodes.Status500InternalServerError;
         httpContext.Response.ContentType = ContentType;
         return httpContext.Response.WriteAsJsonAsync(Value);

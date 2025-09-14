@@ -86,8 +86,9 @@ public class ActionResultMappingGenericTests
         objectResultValue.Status.ShouldBe(StatusCodes.Status500InternalServerError);
         objectResultValue.Extensions.ShouldNotBeNull();
         objectResultValue.Extensions.ShouldNotBeEmpty();
-        objectResultValue.Extensions["TraceId"].ShouldNotBeNull();
-        objectResultValue.Extensions["TraceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
+        objectResultValue.Extensions["traceId"].ShouldNotBeNull();
+        objectResultValue.Extensions["traceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
+        objectResultValue.Type.ShouldBe("https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1");
     }
 
     [Fact]
@@ -112,8 +113,8 @@ public class ActionResultMappingGenericTests
         objectResultValue.Status.ShouldBe(StatusCodes.Status500InternalServerError);
         objectResultValue.Extensions.ShouldNotBeNull();
         objectResultValue.Extensions.ShouldNotBeEmpty();
-        objectResultValue.Extensions["TraceId"].ShouldNotBeNull();
-        objectResultValue.Extensions["TraceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
+        objectResultValue.Extensions["traceId"].ShouldNotBeNull();
+        objectResultValue.Extensions["traceId"].ShouldBe(_controller.HttpContext.TraceIdentifier);
     }
     
     [Fact]

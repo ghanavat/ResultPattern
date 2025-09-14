@@ -1,8 +1,10 @@
 using FluentValidation;
 using FluentValidation.Results;
+using Ghanavats.ResultPattern.Constants;
 using Ghanavats.ResultPattern.Enums;
 using Ghanavats.ResultPattern.Helpers;
 using Ghanavats.ResultPattern.Mapping;
+using Ghanavats.ResultPattern.ProblemDetailsHandlers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -65,9 +67,9 @@ public class ResultMappingTests
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ShouldBeOfType<BetterProblemDetailsFactory<ProblemDetails>>();
+        actual.ShouldBeOfType<BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>>();
         
-        var objectResult = actual as BetterProblemDetailsFactory<ProblemDetails>;
+        var objectResult = actual as BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>;
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ProblemDetails>();
@@ -88,7 +90,7 @@ public class ResultMappingTests
     {
         //arrange
         var expectedResult = Result.Error("Error message 1", expectedErrorkind);
-        var expectedStatusCode = MappingErrorKind.MapStatusCode(expectedResult);
+        var expectedStatusCode = StatusCodesMapper.MapStatusCode(expectedResult);
         
         //act
         var actual = await expectedResult.ToResultAsync();
@@ -99,9 +101,9 @@ public class ResultMappingTests
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ShouldBeOfType<BetterProblemDetailsFactory<ProblemDetails>>();
+        actual.ShouldBeOfType<BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>>();
         
-        var objectResult = actual as BetterProblemDetailsFactory<ProblemDetails>;
+        var objectResult = actual as BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>;
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ProblemDetails>();
@@ -124,9 +126,9 @@ public class ResultMappingTests
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ShouldBeOfType<BetterProblemDetailsFactory<ProblemDetails>>();
+        actual.ShouldBeOfType<BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>>();
         
-        var objectResult = actual as BetterProblemDetailsFactory<ProblemDetails>;
+        var objectResult = actual as BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>;
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ProblemDetails>();
@@ -166,8 +168,8 @@ public class ResultMappingTests
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ValidationProblemDetails>();
-        objectResult.Value.Title.ShouldBe("Invalid request.");
-        objectResult.Value.Detail.ShouldBe("Your request is invalid. The details are populated in Errors.");
+        objectResult.Value.Title.ShouldBe(ProblemDetailsConstants.ValidationTitle);
+        objectResult.Value.Detail.ShouldBe(ProblemDetailsConstants.ValidationDetail);
         objectResult.Value.Errors.ShouldNotBeEmpty();
         objectResult.Value.Status.ShouldBe(StatusCodes.Status400BadRequest);
     }
@@ -203,8 +205,8 @@ public class ResultMappingTests
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ValidationProblemDetails>();
-        objectResult.Value.Title.ShouldBe("Invalid request.");
-        objectResult.Value.Detail.ShouldBe("Your request is invalid. The details are populated in Errors.");
+        objectResult.Value.Title.ShouldBe(ProblemDetailsConstants.ValidationTitle);
+        objectResult.Value.Detail.ShouldBe(ProblemDetailsConstants.ValidationDetail);
         objectResult.Value.Errors.ShouldNotBeEmpty();
         objectResult.Value.Status.ShouldBe(StatusCodes.Status400BadRequest);
         objectResult.Value.Instance.ShouldNotBeNull();
@@ -229,9 +231,9 @@ public class ResultMappingTests
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ShouldBeOfType<BetterProblemDetailsFactory<ProblemDetails>>();
+        actual.ShouldBeOfType<BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>>();
         
-        var objectResult = actual as BetterProblemDetailsFactory<ProblemDetails>;
+        var objectResult = actual as BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>;
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ProblemDetails>();
@@ -256,9 +258,9 @@ public class ResultMappingTests
         
         //assert
         actual.ShouldNotBeNull();
-        actual.ShouldBeOfType<BetterProblemDetailsFactory<ProblemDetails>>();
+        actual.ShouldBeOfType<BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>>();
         
-        var objectResult = actual as BetterProblemDetailsFactory<ProblemDetails>;
+        var objectResult = actual as BetterProblemDetailsFactory<Microsoft.AspNetCore.Mvc.ProblemDetails>;
         objectResult.ShouldNotBeNull();
         
         objectResult.Value.ShouldBeOfType<ProblemDetails>();

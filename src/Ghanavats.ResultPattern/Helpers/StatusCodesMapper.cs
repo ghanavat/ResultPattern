@@ -2,15 +2,15 @@ using System.ComponentModel;
 using Ghanavats.ResultPattern.Enums;
 using Microsoft.AspNetCore.Http;
 
-namespace Ghanavats.ResultPattern.Mapping;
+namespace Ghanavats.ResultPattern.Helpers;
 
 [EditorBrowsable(EditorBrowsableState.Never)]
-internal static class MappingErrorKind
+internal static class StatusCodesMapper
 {
     internal static int MapStatusCode(Result result) => result.Status switch
     {
         ResultStatus.Ok => StatusCodes.Status200OK,
-        ResultStatus.Invalid => StatusCodes.Status400BadRequest, // validation
+        ResultStatus.Invalid => StatusCodes.Status400BadRequest,
         ResultStatus.NotFound => StatusCodes.Status404NotFound,
         ResultStatus.Error => result.Kind switch
         {
@@ -29,7 +29,7 @@ internal static class MappingErrorKind
     internal static int MapStatusCode<T>(Result<T> result) => result.Status switch
     {
         ResultStatus.Ok => StatusCodes.Status200OK,
-        ResultStatus.Invalid => StatusCodes.Status400BadRequest, // validation
+        ResultStatus.Invalid => StatusCodes.Status400BadRequest,
         ResultStatus.NotFound => StatusCodes.Status404NotFound,
         ResultStatus.Error => result.Kind switch
         {
